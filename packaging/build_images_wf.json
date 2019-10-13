@@ -1,0 +1,378 @@
+{
+  "Name": "build-images",
+  "Sources": {
+    "startup_deb.sh": "./mkimage_deb.sh",
+    "startup_el.sh": "./mkimage_el.sh",
+    "startup_sles.sh": "./mkimage_sles.sh",
+    "common.sh": "./common.sh"
+  },
+  "Vars": {
+    "gcs_path": {
+      "Required": true,
+      "Description": "GCS path to packages",
+      "Value": "${SCRATCHPATH}/packages"
+    }
+  },
+  "Steps": {
+    "build-packages": {
+      "SubWorkflow": {
+        "Path": "./build_packages_wf.json",
+        "Vars": {
+          "gcs_path": "${gcs_path}",
+          "base_repo": "hopkiw",
+          "repo": "guest-agent",
+          "pull_ref": "packaging"
+        }
+      }
+    },
+    "create-disks": {
+      "CreateDisks": [
+        {
+          "Name": "inst-imgbuild-rhel-6",
+          "SourceImage": "projects/rhel-cloud/global/images/family/rhel-6"
+        },
+        {
+          "Name": "inst-imgbuild-rhel-7",
+          "SourceImage": "projects/rhel-cloud/global/images/family/rhel-7"
+        },
+        {
+          "Name": "inst-imgbuild-rhel-8",
+          "SourceImage": "projects/rhel-cloud/global/images/family/rhel-8"
+        },
+        {
+          "Name": "inst-imgbuild-centos-8",
+          "SourceImage": "projects/centos-cloud/global/images/family/centos-8"
+        },
+        {
+          "Name": "inst-imgbuild-centos-7",
+          "SourceImage": "projects/centos-cloud/global/images/family/centos-7"
+        },
+        {
+          "Name": "inst-imgbuild-centos-6",
+          "SourceImage": "projects/centos-cloud/global/images/family/centos-6"
+        },
+        {
+          "Name": "inst-imgbuild-debian-9",
+          "SourceImage": "projects/debian-cloud/global/images/family/debian-9"
+        },
+        {
+          "Name": "inst-imgbuild-debian-10",
+          "SourceImage": "projects/debian-cloud/global/images/family/debian-10"
+        },
+        {
+          "Name": "inst-imgbuild-sles-12",
+          "SourceImage": "projects/suse-cloud/global/images/family/sles-12"
+        },
+        {
+          "Name": "inst-imgbuild-sles-15",
+          "SourceImage": "projects/suse-cloud/global/images/family/sles-15"
+        }
+      ]
+    },
+    "install-packages": {
+      "CreateInstances": [
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-debian-9"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-debian-9",
+          "StartupScript": "startup_deb.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-debian-10"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-debian-10",
+          "StartupScript": "startup_deb.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-rhel-6"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-rhel-6",
+          "StartupScript": "startup_el.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-rhel-7"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-rhel-7",
+          "StartupScript": "startup_el.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-rhel-8"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-rhel-8",
+          "StartupScript": "startup_el.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-centos-6"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-centos-6",
+          "StartupScript": "startup_el.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-centos-7"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-centos-7",
+          "StartupScript": "startup_el.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-centos-8"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-centos-8",
+          "StartupScript": "startup_el.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-sles-12"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-sles-12",
+          "StartupScript": "startup_sles.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        },
+        {
+          "Disks": [
+            {"Source": "inst-imgbuild-sles-15"}
+          ],
+          "Metadata": {
+            "gcs-dir": "${gcs_path}"
+          },
+          "MachineType": "n1-standard-2",
+          "Name": "inst-imgbuild-sles-15",
+          "StartupScript": "startup_sles.sh",
+          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
+        }
+      ]
+    },
+    "wait-for-build": {
+      "Timeout": "10m",
+      "WaitForInstancesSignal": [
+        {
+          "Name": "inst-imgbuild-debian-9",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-debian-10",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-rhel-6",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-rhel-7",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-rhel-8",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-centos-6",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-centos-7",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-centos-8",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-sles-12",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        },
+        {
+          "Name": "inst-imgbuild-sles-15",
+          "Stopped": true,
+          "SerialOutput": {
+            "Port": 1,
+            "SuccessMatch": "Image build success",
+            "FailureMatch": "Image build failed",
+            "StatusMatch": "Image build status"
+          }
+        }
+      ]
+    },
+    "create-images": {
+      "CreateImages": [
+        {
+          "Name": "debian-9-nge",
+          "Family": "debian-9-nge",
+          "SourceDisk": "inst-imgbuild-debian-9",
+          "NoCleanup": true
+        },
+        {
+          "Name": "debian-10-nge",
+          "Family": "debian-10-nge",
+          "SourceDisk": "inst-imgbuild-debian-10",
+          "NoCleanup": true
+        },
+        {
+          "Name": "rhel-6-nge",
+          "Family": "rhel-6-nge",
+          "SourceDisk": "inst-imgbuild-rhel-6",
+          "NoCleanup": true
+        },
+        {
+          "Name": "rhel-7-nge",
+          "Family": "rhel-7-nge",
+          "SourceDisk": "inst-imgbuild-rhel-7",
+          "NoCleanup": true
+        },
+        {
+          "Name": "rhel-8-nge",
+          "Family": "rhel-8-nge",
+          "SourceDisk": "inst-imgbuild-rhel-8",
+          "NoCleanup": true
+        },
+        {
+          "Name": "centos-6-nge",
+          "Family": "centos-6-nge",
+          "SourceDisk": "inst-imgbuild-centos-6",
+          "NoCleanup": true
+        },
+        {
+          "Name": "centos-7-nge",
+          "Family": "centos-7-nge",
+          "SourceDisk": "inst-imgbuild-centos-7",
+          "NoCleanup": true
+        },
+        {
+          "Name": "centos-8-nge",
+          "Family": "centos-8-nge",
+          "SourceDisk": "inst-imgbuild-centos-8",
+          "NoCleanup": true
+        },
+        {
+          "Name": "sles-12-nge",
+          "Family": "sles-12-nge",
+          "SourceDisk": "inst-imgbuild-sles-12",
+          "NoCleanup": true
+        },
+        {
+          "Name": "sles-15-nge",
+          "Family": "sles-15-nge",
+          "SourceDisk": "inst-imgbuild-sles-15",
+          "NoCleanup": true
+        }
+      ]
+    }
+  },
+  "Dependencies": {
+    "create-images": [
+      "wait-for-build"
+    ],
+    "wait-for-build": [
+      "install-packages"
+    ],
+    "install-packages": [
+      "create-disks",
+      "build-packages"
+    ]
+  }
+}

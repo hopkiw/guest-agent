@@ -42,7 +42,7 @@
             "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
-          "name": "inst-build-deb",
+          "name": "inst-pkgbuild-deb",
           "StartupScript": "startup_deb.sh",
           "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
@@ -61,7 +61,7 @@
             "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
-          "name": "inst-build-goo",
+          "name": "inst-pkgbuild-goo",
           "StartupScript": "startup_goo.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
@@ -80,7 +80,7 @@
             "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
-          "name": "inst-build-el6",
+          "name": "inst-pkgbuild-el6",
           "StartupScript": "startup_rpm.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
@@ -99,7 +99,7 @@
             "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
-          "name": "inst-build-el7",
+          "name": "inst-pkgbuild-el7",
           "StartupScript": "startup_rpm.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
@@ -118,7 +118,7 @@
             "pull-ref": "${pull_ref}"
           },
           "machineType": "n1-standard-2",
-          "name": "inst-build-el8",
+          "name": "inst-pkgbuild-el8",
           "StartupScript": "startup_rpm.sh",
 	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         }
@@ -128,7 +128,7 @@
       "Timeout": "10m",
       "WaitForInstancesSignal": [
         {
-          "Name": "inst-build-deb",
+          "Name": "inst-pkgbuild-deb",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
@@ -137,7 +137,7 @@
           }
         },
         {
-          "Name": "inst-build-goo",
+          "Name": "inst-pkgbuild-goo",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
@@ -146,7 +146,7 @@
           }
         },
         {
-          "Name": "inst-build-el6",
+          "Name": "inst-pkgbuild-el6",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
@@ -155,7 +155,7 @@
           }
         },
         {
-          "Name": "inst-build-el7",
+          "Name": "inst-pkgbuild-el7",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
@@ -164,7 +164,7 @@
           }
         },
         {
-          "Name": "inst-build-el8",
+          "Name": "inst-pkgbuild-el8",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",
