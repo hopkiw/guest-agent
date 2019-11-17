@@ -63,6 +63,15 @@ rm -rf /var/lib/google
 try_command userdel -rf liamh
 try_command passwd -d root
 
+# Upgrade GCE to break dependency.
+object="google-compute-engine*.deb"
+gsutil cp "${GCS_DIR}/${object}" ./
+rpm -Uvh ./$object
+
+# Remove python altogether.
+python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine')
+[[ -n "$python" ]] && rpm -e "$python"
+
 object="google-guest-agent*el${VERSION_ID/.*}*.rpm"
 gsutil cp "${GCS_DIR}/${object}" ./
 

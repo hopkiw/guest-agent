@@ -62,6 +62,8 @@ curl https://sdk.cloud.google.com >script
 chmod +x script
 bash -c 'CLOUDSDK_INSTALL_DIR=/ ./script'
 
+# TODO: how will SLES packaging look like in the future?
+
 object="google-guest-agent*.rpm"
 ${HOME}/google-cloud-sdk/bin/gsutil cp "${GCS_DIR}/${object}" ./
 

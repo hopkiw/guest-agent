@@ -50,4 +50,10 @@ git_checkout "$BASE_REPO" "$REPO" "$PULL_REF"
 packaging/build_rpm.sh
 gsutil cp /tmp/rpmpackage/RPMS/x86_64/google-guest-agent-*.rpm "${GCS_PATH}/"
 
+git_checkout "$BASE_REPO" "compute-image-packages" "nge"
+cd packages/google-compute-engine
+
+packaging/build_rpm.sh
+gsutil cp /tmp/rpmpackage/RPMS/noarch/google-compute-engine-*.rpm "${GCS_PATH}/"
+
 echo "Package build success: built `echo /tmp/rpmpackage/RPMS/x86_64/*.rpm|xargs -n1 basename`"

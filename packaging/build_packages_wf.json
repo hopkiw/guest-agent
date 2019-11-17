@@ -2,7 +2,6 @@
   "Name": "build-packages",
   "Sources": {
     "startup_deb.sh": "./daisy_startupscript_deb.sh",
-    "startup_goo.sh": "./daisy_startupscript_goo.sh",
     "startup_rpm.sh": "./daisy_startupscript_rpm.sh",
     "common.sh": "./common.sh"
   },
@@ -46,26 +45,6 @@
           "name": "inst-pkgbuild-deb",
           "StartupScript": "startup_deb.sh",
           "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
-        },
-        {
-          "disks": [
-            {
-              "initializeParams": {
-                "diskType": "pd-ssd",
-                "sourceImage": "projects/debian-cloud/global/images/family/debian-10"
-              }
-            }
-          ],
-          "Metadata": {
-            "base-repo": "${base_repo}",
-            "repo": "${repo}",
-            "pull-ref": "${pull_ref}",
-            "enable-os-inventory": "false"
-          },
-          "machineType": "n1-standard-2",
-          "name": "inst-pkgbuild-goo",
-          "StartupScript": "startup_goo.sh",
-	      "Scopes": ["https://www.googleapis.com/auth/devstorage.read_write"]
         },
         {
           "disks": [
@@ -134,15 +113,6 @@
       "WaitForInstancesSignal": [
         {
           "Name": "inst-pkgbuild-deb",
-          "SerialOutput": {
-            "Port": 1,
-            "SuccessMatch": "Package build success",
-            "FailureMatch": "build failed",
-            "StatusMatch": "build status"
-          }
-        },
-        {
-          "Name": "inst-pkgbuild-goo",
           "SerialOutput": {
             "Port": 1,
             "SuccessMatch": "Package build success",

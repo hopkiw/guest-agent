@@ -28,12 +28,18 @@ gsutil cp "${SRC_PATH}/common.sh" ./
 
 . common.sh
 
-apt-get -y update
-apt-get install -y git-core
+try_command apt-get -y update
+try_command apt-get install -y git-core
 
 git_checkout "$BASE_REPO" "$REPO" "$PULL_REF"
 
 ./packaging/build_deb.sh
 gsutil cp /tmp/debpackage/google-guest-agent*.deb "${GCS_PATH}/"
+
+git_checkout "$BASE_REPO" "compute-image-packages" "nge"
+cd packages/google-compute-engine
+
+./packaging/build_deb.sh
+gsutil cp /tmp/debpackage/google-compute-engine*.deb "${GCS_PATH}/"
 
 echo "Package build success: built `echo /tmp/debpackage/*.deb|xargs -n1 basename`"

@@ -53,6 +53,11 @@ for service in network accounts clock-skew; do
   fi
 done
 
+object="google-compute-engine*.deb"
+gsutil cp "${GCS_DIR}/${object}" ./
+DEBIAN_FRONTEND=noninteractive apt install ./${object}
+DEBIAN_FRONTEND=noninteractive apt purge python*google-compute-engine
+
 object="google-guest-agent*.deb"
 gsutil cp "${GCS_DIR}/${object}" ./
 
