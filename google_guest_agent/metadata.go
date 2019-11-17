@@ -241,11 +241,12 @@ func getMetadata(ctx context.Context, hang bool) (*metadata, error) {
 	}
 	finalURL += ("&last_etag=" + etag)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", finalURL, nil)
+	req, err := http.NewRequest("GET", finalURL, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Add("Metadata-Flavor", "Google")
+	req = req.WithContext(ctx)
 
 	resp, err := client.Do(req)
 	// Don't return error on a canceled context.
