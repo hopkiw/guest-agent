@@ -56,6 +56,7 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 
 %files
 %defattr(-,root,root,-)
+/usr/share/google-guest-agent/instance_configs.cfg
 %{_bindir}/google_guest_agent
 %if 0%{?el6}
 /etc/init/%{name}.conf
