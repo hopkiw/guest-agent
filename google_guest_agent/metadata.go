@@ -98,7 +98,7 @@ type networkInterfaces struct {
 type project struct {
 	Attributes       attributes
 	ProjectID        string
-	NumericProjectID string
+	NumericProjectID json.Number
 }
 
 type attributes struct {
