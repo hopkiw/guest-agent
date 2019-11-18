@@ -15,3 +15,5 @@ require (
 	golang.org/x/tools v0.0.0-20191018212557-ed542cd5b28a // indirect
 	gopkg.in/ini.v1 v1.49.0 // indirect
 )
+
+replace github.com/GoogleCloudPlatform/guest-logging-go => github.com/hopkiw/guest-logging-go v0.0.0-20191118053307-bbb40c45ae42

@@ -19,9 +19,9 @@
         "Path": "./build_packages_wf.json",
         "Vars": {
           "gcs_path": "${gcs_path}",
-          "base_repo": "GoogleCloudPlatform",
+          "base_repo": "hopkiw",
           "repo": "guest-agent",
-          "pull_ref": "master"
+          "pull_ref": "build"
         }
       }
     },

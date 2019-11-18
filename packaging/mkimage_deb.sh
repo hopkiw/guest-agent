@@ -53,21 +53,17 @@ for service in network accounts clock-skew; do
   fi
 done
 
-object="google-compute-engine*.deb"
-gsutil cp "${GCS_DIR}/${object}" ./
-DEBIAN_FRONTEND=noninteractive apt install ./${object}
+gceobject="google-compute-engine*.deb"
+agentobject="google-guest-agent*.deb"
+gsutil cp "${GCS_DIR}/${agentobject}" ./
+gsutil cp "${GCS_DIR}/${gceobject}" ./
+DEBIAN_FRONTEND=noninteractive apt install ./${gceobject} ./${agentobject}
 DEBIAN_FRONTEND=noninteractive apt purge python*google-compute-engine
-
-object="google-guest-agent*.deb"
-gsutil cp "${GCS_DIR}/${object}" ./
-
-DEBIAN_FRONTEND=noninteractive apt install ./${object}
 
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
-try_command userdel -rf liamh
+userdel -rf liamh || :
 try_command passwd -d root
-
 
 echo "Image build success"
 sleep 30

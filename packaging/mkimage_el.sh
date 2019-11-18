@@ -60,7 +60,7 @@ done
 
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
-try_command userdel -rf liamh
+userdel -rf liamh || :
 try_command passwd -d root
 
 # Upgrade GCE to break dependency.
