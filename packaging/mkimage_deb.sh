@@ -58,10 +58,13 @@ agentobject="google-guest-agent*.deb"
 gsutil cp "${GCS_DIR}/${agentobject}" ./
 gsutil cp "${GCS_DIR}/${gceobject}" ./
 DEBIAN_FRONTEND=noninteractive apt install ./${gceobject} ./${agentobject}
-DEBIAN_FRONTEND=noninteractive apt purge python*google-compute-engine
+DEBIAN_FRONTEND=noninteractive apt purge -y python*google-compute-engine
+systemctl stop google-guest-agent
 
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
+rm /etc/default/instance_configs.cfg
+rm /etc/boto.cfg
 userdel -rf liamh || :
 try_command passwd -d root
 

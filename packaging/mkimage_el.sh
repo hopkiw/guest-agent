@@ -49,6 +49,7 @@ else
   . /etc/os-release
 fi
 
+# shutdown legacy scripts; don't interfere with new agent
 for service in network accounts clock-skew; do
   if [[ -d /var/run/systemd ]]; then
     systemctl disable google-${service}-daemon.service
@@ -58,24 +59,25 @@ for service in network accounts clock-skew; do
   fi
 done
 
+# Upgrade GCE to break dependency, adds dep on guest-agent.
+object="google-compute-engine*el${VERSION_ID/.*}*.rpm"
+gsutil cp "${GCS_DIR}/${object}" ./
+object="google-guest-agent*el${VERSION_ID/.*}*.rpm"
+gsutil cp "${GCS_DIR}/${object}" ./
+rpm -Uvh ./*.rpm
+
+# Remove python packages.
+python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine')
+[[ -n "$python" ]] && rpm -e "$python"
+
+systemctl stop google-guest-agent
+
+rm /etc/defaults/instance_configs.cfg
+rm /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
 userdel -rf liamh || :
 try_command passwd -d root
-
-# Upgrade GCE to break dependency.
-object="google-compute-engine*.deb"
-gsutil cp "${GCS_DIR}/${object}" ./
-rpm -Uvh ./$object
-
-# Remove python altogether.
-python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine')
-[[ -n "$python" ]] && rpm -e "$python"
-
-object="google-guest-agent*el${VERSION_ID/.*}*.rpm"
-gsutil cp "${GCS_DIR}/${object}" ./
-
-rpm -Uvh ./$object
 
 echo "Image build success"
 sleep 30
