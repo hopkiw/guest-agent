@@ -99,7 +99,7 @@ func agentInit() error {
 		if err != nil && !os.IsNotExist(err) {
 			logger.Warningf("Unable to read /etc/instance_id; won't run first-boot actions")
 		} else {
-			if newMetadata.Instance.ID != string(instanceID) {
+			if newMetadata.Instance.ID.String() != string(instanceID) {
 				logger.Infof("Instance ID changed, running first-boot actions")
 				if err := generateSSHKeys(); err != nil {
 					logger.Warningf("Failed to generate SSH keys: %v", err)
@@ -107,7 +107,7 @@ func agentInit() error {
 				if err := generateBotoConfig(); err != nil {
 					logger.Warningf("Failed to create boto.cfg: %v", err)
 				}
-				if err := ioutil.WriteFile("/etc/instance_id", []byte(newMetadata.Instance.ID), 0644); err != nil {
+				if err := ioutil.WriteFile("/etc/instance_id", []byte(newMetadata.Instance.ID.String()), 0644); err != nil {
 					logger.Warningf("Failed to write instance ID file: %v", err)
 				}
 			}
@@ -190,7 +190,7 @@ func generateBotoConfig() error {
 	if err != nil {
 		return err
 	}
-	botoCfg.Section("GSUtil").Key("default_project_id").SetValue(newMetadata.Project.NumericProjectID)
+	botoCfg.Section("GSUtil").Key("default_project_id").SetValue(newMetadata.Project.NumericProjectID.String())
 	botoCfg.Section("GSUtil").Key("default_apt_version").SetValue("2")
 	botoCfg.Section("GoogleCompute").Key("service_account").SetValue("default")
 
