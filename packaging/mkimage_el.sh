@@ -70,10 +70,14 @@ rpm -Uvh ./*.rpm
 python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine')
 [[ -n "$python" ]] && rpm -e "$python"
 
-systemctl stop google-guest-agent
+  if [[ -d /var/run/systemd ]]; then
+    systemctl stop google-guest-agent
+  elif [[ -f google-shutdown-scripts.conf ]]; then
+    initctl stop google-guest-agent
+  fi
 
-rm /etc/defaults/instance_configs.cfg
-rm /etc/boto.cfg
+rm -f /etc/default/instance_configs.cfg
+rm -f /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
 userdel -rf liamh || :

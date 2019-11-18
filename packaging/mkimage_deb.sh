@@ -63,8 +63,8 @@ systemctl stop google-guest-agent
 
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
-rm /etc/default/instance_configs.cfg
-rm /etc/boto.cfg
+rm -f /etc/default/instance_configs.cfg
+rm -f /etc/boto.cfg
 userdel -rf liamh || :
 try_command passwd -d root
 

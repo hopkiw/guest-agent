@@ -12,7 +12,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-// GCEWindowsAgent is the Google Compute Engine Windows agent executable.
+// GCEGuestAgent is the Google Compute Engine guest agent executable.
 package main
 
 import (
@@ -34,7 +34,7 @@ import (
 )
 
 var (
-	programName              = "GCEWindowsAgent"
+	programName              = "GCEGuestAgent"
 	version                  string
 	ticker                   = time.Tick(70 * time.Second)
 	oldMetadata, newMetadata *metadata
