@@ -218,7 +218,7 @@ func runCmd(cmd *exec.Cmd) error {
 }
 
 func runCmdOutput(cmd *exec.Cmd) *execResult {
-	logger.Debugf("runCmdOutput(%q)\n", cmd.String())
+	logger.Debugf("runCmdOutput(%q args %v)\n", cmd.Path, cmd.Args)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
