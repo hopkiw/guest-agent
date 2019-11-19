@@ -455,8 +455,11 @@ var osrelease release
 // On RHEL7, it also calls disableNM for each interface.
 // On SLES, it calls enableSLESInterfaces instead of dhclient.
 func enableNetworkInterfaces() error {
+	if len(newMetadata.Instance.NetworkInterfaces) < 2 {
+		return nil
+	}
 	var googleInterfaces []string
-	for _, ni := range newMetadata.Instance.NetworkInterfaces {
+	for _, ni := range newMetadata.Instance.NetworkInterfaces[1:] {
 		iface, err := getInterfaceByMAC(ni.Mac)
 		if err != nil {
 			if !containsString(ni.Mac, badMAC) {
