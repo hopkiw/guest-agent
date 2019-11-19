@@ -107,6 +107,7 @@ func runUpdate() {
 		mgrs = append(mgrs, []manager{&clockskewMgr{}, &osloginMgr{}, &accountsMgr{}}...)
 	}
 	for _, mgr := range mgrs {
+		logger.Debugf("running %#v manager")
 		wg.Add(1)
 		go func(mgr manager) {
 			defer wg.Done()
@@ -236,7 +237,7 @@ func closer(c io.Closer) {
 }
 
 func main() {
-	opts := logger.LogOpts{LoggerName: programName}
+	opts := logger.LogOpts{LoggerName: programName, Debug: true}
 	if runtime.GOOS == "windows" {
 		opts.FormatFunction = logFormat
 		opts.Writers = []io.Writer{&serialPort{"COM1"}}

@@ -273,7 +273,7 @@ func (a *addressMgr) set() error {
 	var err error
 	interfaces, err = net.Interfaces()
 	if err != nil {
-		return err
+		return fmt.Errorf("error populating interfaces: %v", err)
 	}
 
 	if runtime.GOOS != "windows" {
@@ -420,13 +420,16 @@ func configureIPv6() error {
 		newNi.DHCPv6Refresh == "" && len(oldMetadata.Instance.NetworkInterfaces) == 0:
 		// disable
 		// uses empty old interface slice to indicate this is first-run.
+		logger.Debugf("disable ipv6 on eth0")
 		if err := runCmd(exec.Command("dhclient", "-r", "-6", "-v", iface.Name)); err != nil {
 			return err
 		}
 	case oldNi.DHCPv6Refresh == "" && newNi.DHCPv6Refresh != "":
 		// enable
+		logger.Debugf("enable ipv6 on eth0")
 		tentative := exec.Command("ip", "-6", "-o", "a", "s", "dev", iface.Name, "scope", "link", "tentative")
 		for i := 0; i < 5; i++ {
+			logger.Debugf("run %v", tentative)
 			res, err := runCmdOutput(tentative)
 			if err == nil && res == "" {
 				break
@@ -434,9 +437,11 @@ func configureIPv6() error {
 			time.Sleep(1 * time.Second)
 		}
 		val := fmt.Sprintf("net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128", iface.Name)
+		logger.Debugf("run sysctl %s", val)
 		if err := runCmd(exec.Command("sysctl", val)); err != nil {
 			return err
 		}
+		logger.Debugf("run dhclient -1 -6 -v eth0", val)
 		if err := runCmd(exec.Command("dhclient", "-1", "-6", "-v", iface.Name)); err != nil {
 			return err
 		}
@@ -465,8 +470,10 @@ func enableNetworkInterfaces() error {
 
 	switch {
 	case osrelease.os == "sles":
+		logger.Debugf("enableSlesInterfaces..")
 		return enableSLESInterfaces(googleInterfaces)
 	case osrelease.os == "rhel" && osrelease.version.major == 7:
+		logger.Debugf("rhel7: disableNM for %v", googleInterfaces)
 		for _, iface := range googleInterfaces {
 			err := disableNM(iface)
 			if err != nil {
@@ -475,6 +482,7 @@ func enableNetworkInterfaces() error {
 		}
 		fallthrough
 	default:
+		logger.Debugf("enabling network interfaces dhclient -x and then dhclient %v", googleInterfaces)
 		err := runCmd(exec.Command("dhclient", "-x"))
 		if err != nil {
 			logger.Warningf("Error running 'dhclient -x': %v.", err)
