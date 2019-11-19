@@ -58,6 +58,7 @@ for service in network accounts clock-skew; do
     rm /etc/init/google-${service}-daemon.conf
   fi
 done
+rm -f /etc/default/instance_configs.cfg
 
 # Upgrade GCE to break dependency, adds dep on guest-agent.
 object="google-compute-engine*el${VERSION_ID/.*}*.rpm"
@@ -76,7 +77,6 @@ python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine')
     initctl stop google-guest-agent
   fi
 
-rm -f /etc/default/instance_configs.cfg
 rm -f /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google

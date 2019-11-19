@@ -52,6 +52,7 @@ for service in network accounts clock-skew; do
     rm /etc/init/google-${service}-daemon.conf
   fi
 done
+rm -f /etc/default/instance_configs.cfg
 
 gceobject="google-compute-engine*.deb"
 agentobject="google-guest-agent*.deb"
@@ -63,7 +64,6 @@ systemctl stop google-guest-agent
 
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
-rm -f /etc/default/instance_configs.cfg
 rm -f /etc/boto.cfg
 userdel -rf liamh || :
 try_command passwd -d root
