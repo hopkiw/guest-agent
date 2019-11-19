@@ -48,7 +48,7 @@ func agentInit() error {
 	//  - Generate boto.cfg (one time only).
 	//  - Set sysctl values.
 	//  - Set scheduler values.
-	//  - Run `google_optimize_ssd` script.
+	//  - Run `google_optimize_local_ssd` script.
 	//  - Run `google_set_multiqueue` script.
 	// TODO incorporate these scripts into the agent. liamh@12-11-19
 	if runtime.GOOS == "windows" {
@@ -129,7 +129,7 @@ func agentInit() error {
 			}
 		}
 
-		for _, script := range []string{"google_optimize_ssd", "google_set_multiqueue"} {
+		for _, script := range []string{"google_optimize_local_ssd", "google_set_multiqueue"} {
 			if err := runCmd(exec.Command(script)); err != nil {
 				logger.Warningf("Failed to run %q script: %v", script, err)
 			}
