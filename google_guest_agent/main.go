@@ -107,7 +107,7 @@ func runUpdate() {
 		mgrs = append(mgrs, []manager{&clockskewMgr{}, &osloginMgr{}, &accountsMgr{}}...)
 	}
 	for _, mgr := range mgrs {
-		logger.Debugf("running %#v manager")
+		logger.Debugf("running %#v manager", mgr)
 		wg.Add(1)
 		go func(mgr manager) {
 			defer wg.Done()
