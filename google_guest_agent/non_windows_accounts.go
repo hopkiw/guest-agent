@@ -313,11 +313,15 @@ func removeExpiredKeys(keys []string) []string {
 	return res
 }
 
-func runUserGroupCmd(cmd, user, group string) error {
+// Replaces {user} or {group} in command string. Supports legacy python-era
+// user command overrides.
+func createUserGroupCmd(cmd, user, group string) *exec.Cmd {
 	cmd = strings.Replace(cmd, "{user}", user, 1)
 	cmd = strings.Replace(cmd, "{group}", group, 1)
 	cmds := strings.Fields(cmd)
-	return exec.Command(cmds[0], cmds[1:]...).Run()
+
+	// We don't use runCmd here because we might need the exit codes.
+	return exec.Command(cmds[0], cmds[1:]...)
 }
 
 // createGoogleUser creates a Google managed user account if needed and adds it
@@ -340,13 +344,13 @@ func createGoogleUser(user string) error {
 func removeGoogleUser(user string) error {
 	if config.Section("Accounts").Key("deprovision_remove").MustBool(true) {
 		userdel := config.Section("Accounts").Key("userdel_cmd").MustString("userdel -r {user}")
-		return runUserGroupCmd(userdel, user, "")
+		return runCmd(createUserGroupCmd(userdel, user, ""))
 	}
 	if err := updateAuthorizedKeysFile(user, []string{}); err != nil {
 		return err
 	}
 	gpasswddel := config.Section("Accounts").Key("gpasswd_remove_cmd").MustString("gpasswd -d {user} {group}")
-	return runUserGroupCmd(gpasswddel, user, "google-sudoers")
+	return runCmd(createUserGroupCmd(gpasswddel, user, "google-sudoers"))
 
 }
 
@@ -369,12 +373,13 @@ func createSudoersFile() error {
 // createSudoersGroup creates the google-sudoers group if it does not exist.
 func createSudoersGroup() error {
 	groupadd := config.Section("Accounts").Key("groupadd_cmd").MustString("groupadd {group}")
-	err := runUserGroupCmd(groupadd, "", "google-sudoers")
-	if err != nil {
-		if v, ok := err.(*exec.ExitError); ok && v.ExitCode() == 9 {
-			// 9 means group already exists.
-			return nil
-		}
+	ret := runCmdOutput(createUserGroupCmd(groupadd, "", "google-sudoers"))
+	if ret.ExitCode() == 9 {
+		// 9 means group already exists.
+		return nil
+	}
+	if ret.ExitCode() != 0 {
+		return error(ret)
 	}
 	logger.Infof("Created google sudoers file")
 	return nil

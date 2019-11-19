@@ -16,10 +16,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
@@ -107,13 +107,13 @@ func runUpdate() {
 		mgrs = append(mgrs, []manager{&clockskewMgr{}, &osloginMgr{}, &accountsMgr{}}...)
 	}
 	for _, mgr := range mgrs {
-		logger.Debugf("running %#v manager", mgr)
 		wg.Add(1)
 		go func(mgr manager) {
 			defer wg.Done()
 			if mgr.disabled(runtime.GOOS) || (!mgr.timeout() && !mgr.diff()) {
 				return
 			}
+			logger.Debugf("running %#v manager", mgr)
 			if err := mgr.set(); err != nil {
 				logger.Errorf("error running %#v manager: %s", mgr, err)
 			}
@@ -184,35 +184,55 @@ func run(ctx context.Context) {
 	logger.Infof("GCE Agent Stopped")
 }
 
-func runCmdOutput(cmd *exec.Cmd) (string, error) {
-	output, err := cmd.StdoutPipe()
-	if err != nil {
-		return "", err
-	}
-	if err := cmd.Start(); err != nil {
-		return "", err
-	}
-	ret, err := ioutil.ReadAll(output)
-	if err != nil {
-		return "", err
-	}
-	if err := cmd.Wait(); err != nil {
-		return "", err
-	}
-
-	return string(ret), nil
+type execResult struct {
+	// Return code. Set to -1 if we failed to run the command.
+	code int
+	// Stderr or err.Error if we failed to run the command.
+	err string
+	// Stdout or "" if we failed to run the command.
+	out string
 }
 
-// runCmd is exec.Cmd.Run() with a flattened error return.
+func (e execResult) Error() string {
+	return e.err
+}
+
+func (e execResult) ExitCode() int {
+	return e.code
+}
+
+func (e execResult) Stdout() string {
+	return e.out
+}
+
+func (e execResult) Stderr() string {
+	return e.err
+}
+
 func runCmd(cmd *exec.Cmd) error {
+	res := runCmdOutput(cmd)
+	if res.ExitCode() != 0 {
+		return res
+	}
+	return nil
+}
+
+func runCmdOutput(cmd *exec.Cmd) *execResult {
+	logger.Debugf("runCmdOutput(%q)\n", cmd.String())
+
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
 	err := cmd.Run()
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
-			return fmt.Errorf(string(ee.Stderr))
+			return &execResult{code: ee.ExitCode(), err: stderr.String()}
+		} else {
+			return &execResult{code: -1, err: err.Error()}
 		}
-		return err
 	}
-	return nil
+	return &execResult{code: 0, out: stdout.String()}
 }
 
 func containsString(s string, ss []string) bool {

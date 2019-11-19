@@ -133,15 +133,12 @@ func getLocalRoutes(ifname string) ([]string, error) {
 	}
 
 	args := fmt.Sprintf("route list table local type local scope host dev %s proto %d", ifname, protoID)
-	out, err := exec.Command("ip", strings.Split(args, " ")...).Output()
-	if err != nil {
-		if ee, ok := err.(*exec.ExitError); ok {
-			return nil, fmt.Errorf(string(ee.Stderr))
-		}
-		return nil, err
+	out := runCmdOutput(exec.Command("ip", strings.Split(args, " ")...))
+	if out.ExitCode() != 0 {
+		return nil, error(out)
 	}
 	var res []string
-	for _, line := range strings.Split(string(out), "\n") {
+	for _, line := range strings.Split(out.Stdout(), "\n") {
 		line = strings.TrimPrefix(line, "local ")
 		line = strings.TrimSpace(line)
 		if line != "" {
@@ -243,12 +240,7 @@ func (a *addressMgr) diff() bool {
 }
 
 func (a *addressMgr) timeout() bool {
-	select {
-	case <-ticker:
-		return true
-	default:
-		return false
-	}
+	return false
 }
 
 func (a *addressMgr) disabled(os string) (disabled bool) {
@@ -429,19 +421,16 @@ func configureIPv6() error {
 		logger.Debugf("enable ipv6 on eth0")
 		tentative := exec.Command("ip", "-6", "-o", "a", "s", "dev", iface.Name, "scope", "link", "tentative")
 		for i := 0; i < 5; i++ {
-			logger.Debugf("run %v", tentative)
-			res, err := runCmdOutput(tentative)
-			if err == nil && res == "" {
+			res := runCmdOutput(tentative)
+			if res.ExitCode() == 0 && res.Stdout() == "" {
 				break
 			}
 			time.Sleep(1 * time.Second)
 		}
 		val := fmt.Sprintf("net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128", iface.Name)
-		logger.Debugf("run sysctl %s", val)
 		if err := runCmd(exec.Command("sysctl", val)); err != nil {
 			return err
 		}
-		logger.Debugf("run dhclient -1 -6 -v eth0", val)
 		if err := runCmd(exec.Command("dhclient", "-1", "-6", "-v", iface.Name)); err != nil {
 			return err
 		}
@@ -473,7 +462,6 @@ func enableNetworkInterfaces() error {
 
 	switch {
 	case osrelease.os == "sles":
-		logger.Debugf("enableSlesInterfaces..")
 		return enableSLESInterfaces(googleInterfaces)
 	case osrelease.os == "rhel" && osrelease.version.major == 7:
 		logger.Debugf("rhel7: disableNM for %v", googleInterfaces)
@@ -485,7 +473,6 @@ func enableNetworkInterfaces() error {
 		}
 		fallthrough
 	default:
-		logger.Debugf("enabling network interfaces dhclient -x and then dhclient %v", googleInterfaces)
 		err := runCmd(exec.Command("dhclient", "-x"))
 		if err != nil {
 			logger.Warningf("Error running 'dhclient -x': %v.", err)
@@ -497,6 +484,7 @@ func enableNetworkInterfaces() error {
 // enableSLESInterfaces writes one ifcfg file for each interface, then
 // runs `wicked ifup eth1 eth2 ... ethN`
 func enableSLESInterfaces(interfaces []string) error {
+	logger.Debugf("enableSlesInterfaces..")
 	var err error
 	var priority = 10100
 	for _, iface := range interfaces {
