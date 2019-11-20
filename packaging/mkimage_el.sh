@@ -71,11 +71,11 @@ rpm -Uvh ./*.rpm
 python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine')
 [[ -n "$python" ]] && rpm -e "$python"
 
-  if [[ -d /var/run/systemd ]]; then
-    systemctl stop google-guest-agent
-  elif [[ -f google-shutdown-scripts.conf ]]; then
-    initctl stop google-guest-agent
-  fi
+if [[ -d /var/run/systemd ]]; then
+  systemctl stop google-guest-agent
+elif [[ -f google-shutdown-scripts.conf ]]; then
+  initctl stop google-guest-agent
+fi
 
 rm -f /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
@@ -83,6 +83,13 @@ rm -rf /var/lib/google
 userdel -rf liamh || :
 try_command passwd -d root
 
-echo "Image build success"
+echo "Check it out:"
+if [[ -d /var/run/systemd ]]; then
+  ls -l /lib/systemd/system/google-guest-agent.service
+else 
+  ls -l /etc/init/google-guest-agent.conf
+fi
+
+echo "Image build failed"
 sleep 30
 echo o > /proc/sysrq-trigger

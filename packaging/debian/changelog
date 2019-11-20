@@ -1,3 +1,9 @@
+google-guest-agent (1:20191118.00-g1) stable; urgency=medium
+
+  * release multi platform.
+
+ -- Google Cloud Team <gc-team@google.com>  Wed, 09 Oct 2019 10:40:07 +0000
+
 google-guest-agent (1:20191021.00-g1) stable; urgency=medium
 
   * Extend windows agent for multi platform.
