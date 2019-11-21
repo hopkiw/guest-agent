@@ -1,7 +1,7 @@
 [Unit]
 Description=Google Compute Engine Guest Agent
-After=network-online.target network.target
-After=google-instance-setup.service
+After=network-online.target network.target rsyslog.service
+Before=sshd.service
 PartOf=network.service
 
 [Service]
@@ -12,4 +12,4 @@ Restart=always
 StandardOutput=journal+console
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=multi-user.target sshd.service
