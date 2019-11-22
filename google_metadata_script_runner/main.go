@@ -233,6 +233,7 @@ func getMetadata(key string, recurse bool) ([]byte, error) {
 
 // runScript makes a temporary directory and temporary file for the script, downloads and then runs it.
 func runScript(ctx context.Context, key, value string) error {
+	logger.Debugf("running script %q:%q", key, value)
 	var u *url.URL
 	if strings.HasSuffix(key, "-url") {
 		var err error
@@ -254,15 +255,17 @@ func runScript(ctx context.Context, key, value string) error {
 	// on other systems though.
 	tmpFile := filepath.Join(dir, key)
 	for _, ext := range []string{"bat", "cmd", "ps1"} {
-		if strings.HasSuffix(key, fmt.Sprintf("-%s", ext)) || strings.HasSuffix(u.Path, fmt.Sprintf(".%s", ext)) {
+		switch {
+		case strings.HasSuffix(key, fmt.Sprintf("-%s", ext)),
+			u != nil && strings.HasSuffix(u.Path, fmt.Sprintf(".%s", ext)):
 			tmpFile = fmt.Sprintf("%s.%s", tmpFile, ext)
 			break
 		}
 	}
 
 	// Create or download files.
-	if strings.HasSuffix(key, "-url") {
-		file, err := os.Create(tmpFile)
+	if u != nil {
+		file, err := os.OpenFile(tmpFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
 			return fmt.Errorf("error opening temp file: %v", err)
 		}
@@ -271,7 +274,7 @@ func runScript(ctx context.Context, key, value string) error {
 			return err
 		}
 	} else {
-		if err := ioutil.WriteFile(tmpFile, []byte(value), 0666); err != nil {
+		if err := ioutil.WriteFile(tmpFile, []byte(value), 0755); err != nil {
 			return err
 		}
 	}
@@ -322,6 +325,7 @@ func runCmd(c *exec.Cmd, name string) error {
 // getWantedKeys returns the list of keys to check for a given type of script and OS.
 func getWantedKeys(args []string, os string) ([]string, error) {
 	if len(args) != 2 {
+		fmt.Printf("args != 2, return")
 		return nil, usageError
 	}
 	prefix := args[1]
@@ -397,12 +401,14 @@ func main() {
 		Writers:             []io.Writer{os.Stdout},
 		DisableCloudLogging: true,
 		DisableLocalLogging: true,
+		Debug:               true,
 	}
 
 	// The keys to check vary based on the argument and the OS. Also functions to validate arguments.
 	wantedKeys, err := getWantedKeys(os.Args, runtime.GOOS)
 	if err != nil {
-		logger.Fatalf(err.Error())
+		fmt.Printf(err.Error() + "\n")
+		os.Exit(2)
 	}
 
 	projectID, err := getMetadataKey("/project/project-id")
