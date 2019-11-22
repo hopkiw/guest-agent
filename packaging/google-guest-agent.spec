@@ -51,6 +51,8 @@ install -p -m 0644 %{name}.conf %{buildroot}/etc/init
 install -d %{buildroot}%{_unitdir}
 install -d %{buildroot}%{_presetdir}
 install -p -m 0644 %{name}.service %{buildroot}%{_unitdir}
+install -p -m 0644 google-startup-scripts.service %{buildroot}%{_unitdir}
+install -p -m 0644 google-shutdown-scripts.service %{buildroot}%{_unitdir}
 install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %endif
 
@@ -62,6 +64,8 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 /etc/init/%{name}.conf
 %else
 %{_unitdir}/%{name}.service
+%{_unitdir}/google-startup-scripts.service
+%{_unitdir}/google-shutdown-scripts.service
 %{_presetdir}/90-%{name}.preset
 %endif
 
@@ -69,6 +73,8 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 
 %post
 %systemd_post google-guest-agent.service
+%systemd_post google-startup-scripts.service
+%systemd_post google-shutdown-scripts.service
 if [ $1 -eq 1 ]; then
   if [ ! -f /etc/default/instance_configs.cfg ]; then
     cp -a /usr/share/google-guest-agent/instance_configs.cfg /etc/default/
@@ -77,9 +83,13 @@ fi
 
 %preun
 %systemd_preun google-guest-agent.service
+%systemd_preun google-startup-scripts.service
+%systemd_preun google-shutdown-scripts.service
 
 %postun
 %systemd_postun google-guest-agent.service
+%systemd_postun google-startup-scripts.service
+%systemd_postun google-shutdown-scripts.service
 if [ $1 -eq 1 ]; then
   if [ -f /etc/default/instance_configs.cfg ]; then
     rm /etc/default/instance_configs.cfg
