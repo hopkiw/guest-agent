@@ -1,0 +1,13 @@
+[Unit]
+Description=Google Compute Engine Startup Scripts
+After=network-online.target network.target rsyslog.service google-guest-agent.service
+Before=apt-daily.service
+
+[Service]
+ExecStart=/usr/bin/google_metadata_script_runner startup
+KillMode=process
+Type=oneshot
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=Google Compute Engine Shutdown Scripts
+After=network-online.target network.target rsyslog.service google-guest-agent.service
+
+[Service]
+ExecStart=/bin/true
+ExecStop=/usr/bin/google_metadata_script_runner shutdown
+Type=oneshot
+RemainAfterExit=true
+TimeoutStopSec=0
+StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
