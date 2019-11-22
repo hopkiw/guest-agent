@@ -152,6 +152,7 @@ func generateSSHKeys() error {
 	}
 	for _, file := range files {
 		if strings.HasPrefix(file, "ssh_host_") && strings.HasSuffix(file, "_key") {
+			logger.Debugf("rm ssh key %s", file)
 			if err := os.Remove("/etc/ssh/" + file); err != nil {
 				return err
 			}
@@ -162,6 +163,7 @@ func generateSSHKeys() error {
 	keyTypes := config.Section("InstanceSetup").Key("host_key_types").MustString("ecdsa,ed25519,rsa")
 	for _, keyType := range strings.Split(keyTypes, ",") {
 		outfile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keyType)
+		logger.Debugf("creating ssh key %s", outfile)
 		if err := runCmd(exec.Command("ssh-keygen", "-t", keyType, "-f", outfile, "-N", "", "-q")); err != nil {
 			return fmt.Errorf("Failed to generate SSH host key %q", outfile)
 		}
@@ -175,7 +177,7 @@ func generateSSHKeys() error {
 		if err != nil {
 			return fmt.Errorf("Can't read %s public key", keyType)
 		}
-		if vals := strings.Split(string(pubKey), " "); len(vals) == 2 {
+		if vals := strings.Split(string(pubKey), " "); len(vals) >= 2 {
 			if err := writeGuestAttributes("hostkeys/"+vals[0], vals[1]); err != nil {
 				return fmt.Errorf("Failed to upload %s key to guest attributes", keyType)
 			}
@@ -198,6 +200,7 @@ func generateBotoConfig() error {
 }
 
 func writeGuestAttributes(key, value string) error {
+	logger.Debugf("write guest attr %q:%q", key, value)
 	client := &http.Client{Timeout: defaultTimeout}
 	finalURL := metadataURL + "instance/guest-attributes/" + key
 	req, err := http.NewRequest("PUT", finalURL, strings.NewReader(value))
@@ -226,6 +229,7 @@ func setIOScheduler() error {
 		// Detect if device is using MQ subsystem.
 		stat, err := os.Stat("/sys/block/" + dev + "/mq")
 		if err == nil && stat.IsDir() {
+			logger.Debugf("set disk %s scheduler to none", dev)
 			f, err := os.OpenFile("/sys/block/"+dev+"/queue/scheduler", os.O_WRONLY|os.O_TRUNC, 0700)
 			if err != nil {
 				return err
