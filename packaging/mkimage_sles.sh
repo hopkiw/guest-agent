@@ -34,7 +34,7 @@ function exit_err() {
   err "$0:$1 $BASH_COMMAND"
 }
 
-trap 'err $LINENO' ERR
+trap 'exit_err $LINENO' ERR
 
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_DIR=$(curl -f -H Metadata-Flavor:Google ${URL}/gcs-dir)
@@ -69,6 +69,7 @@ ${HOME}/google-cloud-sdk/bin/gsutil cp "${GCS_DIR}/${object}" ./
 
 rpm -Uvh ./$object
 
-echo "Image build success"
+sync
 sleep 30
+echo "Image build success"
 echo o > /proc/sysrq-trigger

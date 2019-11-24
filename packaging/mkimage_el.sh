@@ -34,7 +34,7 @@ function exit_err() {
   err "$0:$1 $BASH_COMMAND"
 }
 
-trap 'err $LINENO' ERR
+trap 'exit_err $LINENO' ERR
 
 URL="http://metadata/computeMetadata/v1/instance/attributes"
 GCS_DIR=$(curl -f -H Metadata-Flavor:Google ${URL}/gcs-dir)
@@ -48,6 +48,9 @@ if [[ ! -f /etc/os-release ]]; then
 else
   . /etc/os-release
 fi
+
+setenforce 0
+sed -i"" 's/SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
 
 # shutdown legacy scripts; don't interfere with new agent
 for service in network accounts clock-skew; do
@@ -65,12 +68,13 @@ object="google-compute-engine*el${VERSION_ID/.*}*.rpm"
 gsutil cp "${GCS_DIR}/${object}" ./
 object="google-guest-agent*el${VERSION_ID/.*}*.rpm"
 gsutil cp "${GCS_DIR}/${object}" ./
-rpm -Uvh ./*.rpm
+yum install -y ./*rpm
 
 # Remove python packages.
-python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine')
+python=$(rpmquery -a|grep -iE 'python.?-google-compute-engine') || :
 [[ -n "$python" ]] && rpm -e "$python"
 
+# Don't interfere !
 if [[ -d /var/run/systemd ]]; then
   systemctl stop google-guest-agent
 elif [[ -f google-shutdown-scripts.conf ]]; then
@@ -80,6 +84,7 @@ fi
 rm -f /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
+rm -f /etc/instance_id
 userdel -rf liamh || :
 try_command passwd -d root
 
@@ -90,6 +95,7 @@ else
   ls -l /etc/init/google-guest-agent.conf
 fi
 
-echo "Image build failed"
+sync
 sleep 30
+echo "Image build success"
 echo o > /proc/sysrq-trigger

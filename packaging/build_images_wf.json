@@ -3,7 +3,6 @@
   "Sources": {
     "startup_deb.sh": "./mkimage_deb.sh",
     "startup_el.sh": "./mkimage_el.sh",
-    "startup_sles.sh": "./mkimage_sles.sh",
     "common.sh": "./common.sh"
   },
   "Vars": {
@@ -58,14 +57,6 @@
         {
           "Name": "inst-imgbuild-debian-10",
           "SourceImage": "projects/debian-cloud/global/images/family/debian-10"
-        },
-        {
-          "Name": "inst-imgbuild-sles-12",
-          "SourceImage": "projects/suse-cloud/global/images/family/sles-12"
-        },
-        {
-          "Name": "inst-imgbuild-sles-15",
-          "SourceImage": "projects/suse-cloud/global/images/family/sles-15"
         }
       ]
     },
@@ -166,30 +157,6 @@
           "Name": "inst-imgbuild-centos-8",
           "StartupScript": "startup_el.sh",
           "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
-        },
-        {
-          "Disks": [
-            {"Source": "inst-imgbuild-sles-12"}
-          ],
-          "Metadata": {
-            "gcs-dir": "${gcs_path}"
-          },
-          "MachineType": "n1-standard-2",
-          "Name": "inst-imgbuild-sles-12",
-          "StartupScript": "startup_sles.sh",
-          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
-        },
-        {
-          "Disks": [
-            {"Source": "inst-imgbuild-sles-15"}
-          ],
-          "Metadata": {
-            "gcs-dir": "${gcs_path}"
-          },
-          "MachineType": "n1-standard-2",
-          "Name": "inst-imgbuild-sles-15",
-          "StartupScript": "startup_sles.sh",
-          "Scopes": ["https://www.googleapis.com/auth/devstorage.read_only"]
         }
       ]
     },
@@ -275,26 +242,6 @@
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
-        },
-        {
-          "Name": "inst-imgbuild-sles-12",
-          "Stopped": true,
-          "SerialOutput": {
-            "Port": 1,
-            "SuccessMatch": "Image build success",
-            "FailureMatch": "Image build failed",
-            "StatusMatch": "Image build status"
-          }
-        },
-        {
-          "Name": "inst-imgbuild-sles-15",
-          "Stopped": true,
-          "SerialOutput": {
-            "Port": 1,
-            "SuccessMatch": "Image build success",
-            "FailureMatch": "Image build failed",
-            "StatusMatch": "Image build status"
-          }
         }
       ]
     },
@@ -346,18 +293,6 @@
           "Name": "centos-8-nge",
           "Family": "centos-8-nge",
           "SourceDisk": "inst-imgbuild-centos-8",
-          "NoCleanup": true
-        },
-        {
-          "Name": "sles-12-nge",
-          "Family": "sles-12-nge",
-          "SourceDisk": "inst-imgbuild-sles-12",
-          "NoCleanup": true
-        },
-        {
-          "Name": "sles-15-nge",
-          "Family": "sles-15-nge",
-          "SourceDisk": "inst-imgbuild-sles-15",
           "NoCleanup": true
         }
       ]

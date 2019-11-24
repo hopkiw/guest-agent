@@ -58,16 +58,18 @@ gceobject="google-compute-engine*.deb"
 agentobject="google-guest-agent*.deb"
 gsutil cp "${GCS_DIR}/${agentobject}" ./
 gsutil cp "${GCS_DIR}/${gceobject}" ./
-DEBIAN_FRONTEND=noninteractive apt install ./${gceobject} ./${agentobject}
+DEBIAN_FRONTEND=noninteractive apt install -y ./${gceobject} ./${agentobject}
 DEBIAN_FRONTEND=noninteractive apt purge -y python*google-compute-engine
 systemctl stop google-guest-agent
 
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
 rm -f /etc/boto.cfg
+rm -f /etc/instance_id
 userdel -rf liamh || :
 try_command passwd -d root
 
-echo "Image build success"
+sync
 sleep 30
+echo "Image build success"
 echo o > /proc/sysrq-trigger
