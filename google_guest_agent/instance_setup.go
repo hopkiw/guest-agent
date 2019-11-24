@@ -94,11 +94,18 @@ func agentInit() error {
 	} else {
 		// Check if instance ID has changed, and if so, consider this
 		// the first boot of the instance.
-		// TODO Also do this for windows. liamh@13-11-19
+		// TODO Also do this for windows. liamh@13-11-2019
 		instanceID, err := ioutil.ReadFile("/etc/instance_id")
 		if err != nil && !os.IsNotExist(err) {
-			logger.Warningf("Unable to read /etc/instance_id; won't run first-boot actions")
+			logger.Warningf("Not running first-boot actions, error reading instance ID: %v", err)
 		} else {
+			if string(instanceID) == "" {
+				// If the file didn't exist or was empty, try legacy key from instance configs.
+				instanceID = []byte(config.Section("Instance").Key("instance_id").String())
+				if err := ioutil.WriteFile("/etc/instance_id", []byte(newMetadata.Instance.ID.String()), 0644); err != nil {
+					logger.Warningf("Failed to write instance ID file: %v", err)
+				}
+			}
 			if newMetadata.Instance.ID.String() != string(instanceID) {
 				logger.Infof("Instance ID changed, running first-boot actions")
 				if err := generateSSHKeys(); err != nil {
