@@ -38,12 +38,16 @@ Contains the Google guest agent binary.
 %autosetup
 
 %build
-cd google_guest_agent
-GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{_version}" -mod=readonly
+for bin in google_guest_agent google_metadata_script_runner; do
+  pushd "$bin"
+  GOPATH=%{_gopath} CGO_ENABLED=0 %{_go} build -ldflags="-s -w -X main.version=%{_version}" -mod=readonly
+  popd
+done
 
 %install
 install -d %{buildroot}%{_bindir}
 install -p -m 0755 google_guest_agent/google_guest_agent %{buildroot}%{_bindir}/google_guest_agent
+install -p -m 0755 google_metadata_script_runner/google_metadata_script_runner %{buildroot}%{_bindir}/google_metadata_script_runner
 install -d %{buildroot}/usr/share/google-guest-agent
 install -p -m 0644 instance_configs.cfg %{buildroot}/usr/share/google-guest-agent/instance_configs.cfg
 %if 0%{?el6}
@@ -62,6 +66,7 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %defattr(-,root,root,-)
 /usr/share/google-guest-agent/instance_configs.cfg
 %{_bindir}/google_guest_agent
+%{_bindir}/google_metadata_script_runner
 %if 0%{?el6}
 /etc/init/%{name}.conf
 %else
@@ -71,31 +76,56 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %{_presetdir}/90-%{name}.preset
 %endif
 
-%if ! 0%{?el6}
-
 %post
-%systemd_post google-guest-agent.service
-%systemd_post google-startup-scripts.service
-%systemd_post google-shutdown-scripts.service
 if [ $1 -eq 1 ]; then
+  # Initial installation
+  if [ -d /run/systemd/system ]; then
+    # Set to defaults from preset file, which defaults to enable.
+    systemctl preset google-guest-agent.service >/dev/null 2>&1 || :
+    systemctl preset google-startup-scripts.service >/dev/null 2>&1 || :
+    systemctl preset google-shutdown-scripts.service >/dev/null 2>&1 || :
+
+    # Start the guest agent service, if it hasn't been disabled.
+    if systemctl is-enabled --quiet google-guest-agent.service >/dev/null 2>&1; then
+      systemctl start google-guest-agent.service >/dev/null 2>&1 || :
+    fi
+  fi
+
+  # Install instance configs if not already present.
   if [ ! -f /etc/default/instance_configs.cfg ]; then
     cp -a /usr/share/google-guest-agent/instance_configs.cfg /etc/default/
+  fi
+else
+  # Package upgrade
+  if [ -d /run/systemd/system ]; then
+    systemctl try-restart google-guest-agent.service >/dev/null 2>&1 || :
   fi
 fi
 
 %preun
-%systemd_preun google-guest-agent.service
-%systemd_preun google-startup-scripts.service
-%systemd_preun google-shutdown-scripts.service
+if [ $1 -eq 0 ] && [ -d /run/systemd/system ]; then
+  # Package removal, not upgrade
+  systemctl --no-reload disable google-guest-agent.service >/dev/null 2>&1 || :
+  systemctl stop google-guest-agent.service >/dev/null 2>&1 || :
+  
+  systemctl --no-reload disable google-startup-scripts.service >/dev/null 2>&1 || :
+  systemctl stop google-startup-scripts.service >/dev/null 2>&1 || :
+
+  # We must not stop the google-shutdown-scripts service, as this would run the
+  # shutdown scripts. The service will remain 'active' and in the service list until
+  # next boot, but will not be run.
+  systemctl --no-reload disable google-shutdown-scripts.service >/dev/null 2>&1 || :
+fi
+  
 
 %postun
-%systemd_postun google-guest-agent.service
-%systemd_postun google-startup-scripts.service
-%systemd_postun google-shutdown-scripts.service
-if [ $1 -eq 1 ]; then
+if [ $1 -eq 0 ]; then
+  # Package removal, not upgrade
+  if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || :
+  fi
+
   if [ -f /etc/default/instance_configs.cfg ]; then
     rm /etc/default/instance_configs.cfg
   fi
 fi
-
-%endif
