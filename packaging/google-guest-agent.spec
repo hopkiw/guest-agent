@@ -52,7 +52,9 @@ install -d %{buildroot}/usr/share/google-guest-agent
 install -p -m 0644 instance_configs.cfg %{buildroot}/usr/share/google-guest-agent/instance_configs.cfg
 %if 0%{?el6}
 install -d %{buildroot}/etc/init
-install -p -m 0644 %{name}.conf %{buildroot}/etc/init
+install -p -m 0644 %{name}.conf %{buildroot}/etc/init/
+install -p -m 0644 google-startup-scripts.conf %{buildroot}/etc/init/
+install -p -m 0644 google-shutdown-scripts.conf %{buildroot}/etc/init/
 %else
 install -d %{buildroot}%{_unitdir}
 install -d %{buildroot}%{_presetdir}
@@ -69,6 +71,8 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %{_bindir}/google_metadata_script_runner
 %if 0%{?el6}
 /etc/init/%{name}.conf
+/etc/init/google-startup-scripts.conf
+/etc/init/google-shutdown-scripts.conf
 %else
 %{_unitdir}/%{name}.service
 %{_unitdir}/google-startup-scripts.service
