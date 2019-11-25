@@ -172,21 +172,21 @@ func generateSSHKeys() error {
 		outfile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keyType)
 		logger.Debugf("creating ssh key %s", outfile)
 		if err := runCmd(exec.Command("ssh-keygen", "-t", keyType, "-f", outfile, "-N", "", "-q")); err != nil {
-			return fmt.Errorf("Failed to generate SSH host key %q", outfile)
+			return fmt.Errorf("Failed to generate SSH host key %q: %v", outfile, err)
 		}
 		if err := os.Chmod(outfile, 0600); err != nil {
-			return fmt.Errorf("Failed to chmod SSH host key %q", outfile)
+			return fmt.Errorf("Failed to chmod SSH host key %q: %v", outfile, err)
 		}
 		if err := os.Chmod(outfile+".pub", 0644); err != nil {
-			return fmt.Errorf("Failed to chmod SSH host key %q", outfile+".pub")
+			return fmt.Errorf("Failed to chmod SSH host key %q: %v", outfile+".pub", err)
 		}
 		pubKey, err := ioutil.ReadFile(outfile + ".pub")
 		if err != nil {
-			return fmt.Errorf("Can't read %s public key", keyType)
+			return fmt.Errorf("Can't read %s public key: %v", keyType, err)
 		}
 		if vals := strings.Split(string(pubKey), " "); len(vals) >= 2 {
 			if err := writeGuestAttributes("hostkeys/"+vals[0], vals[1]); err != nil {
-				return fmt.Errorf("Failed to upload %s key to guest attributes", keyType)
+				return fmt.Errorf("Failed to upload %s key to guest attributes: %v", keyType, err)
 			}
 		}
 	}
