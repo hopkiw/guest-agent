@@ -131,6 +131,7 @@ func downloadURL(url string, file *os.File) error {
 }
 
 func downloadScript(ctx context.Context, path string, file *os.File) error {
+	logger.Debugf("downloadScript(%s)", path)
 	// Startup scripts may run before DNS is running on some systems,
 	// particularly once a system is promoted to a domain controller.
 	// Try to lookup storage.googleapis.com and sleep for up to 100s if
@@ -144,6 +145,7 @@ func downloadScript(ctx context.Context, path string, file *os.File) error {
 	}
 	bucket, object := parseGCS(path)
 	if bucket != "" && object != "" {
+		logger.Debugf("downloadScript says this is a GS URL")
 		// TODO: why is this retry outer, but downloadURL retry is inner?
 		// Retry up to 3 times, only wait 1 second between retries.
 		for i := 1; ; i++ {
@@ -159,6 +161,8 @@ func downloadScript(ctx context.Context, path string, file *os.File) error {
 		}
 		logger.Infof("Trying unauthenticated download")
 		path = fmt.Sprintf("https://%s/%s/%s", storageURL, bucket, object)
+	} else {
+		logger.Debugf("downloadScript says this is NOT a GS URL")
 	}
 
 	// Fall back to an HTTP GET of the URL.
@@ -233,7 +237,7 @@ func getMetadata(key string, recurse bool) ([]byte, error) {
 
 // runScript makes a temporary directory and temporary file for the script, downloads and then runs it.
 func runScript(ctx context.Context, key, value string) error {
-	logger.Debugf("running script %q:%q", key, value)
+	logger.Debugf("runScript(%q:%q)", key, value)
 	var u *url.URL
 	if strings.HasSuffix(key, "-url") {
 		var err error
@@ -241,6 +245,7 @@ func runScript(ctx context.Context, key, value string) error {
 		if err != nil {
 			return err
 		}
+		logger.Debugf("key ends in -url and val parses as a URL")
 	}
 
 	// Make temp directory.
@@ -269,11 +274,13 @@ func runScript(ctx context.Context, key, value string) error {
 		if err != nil {
 			return fmt.Errorf("error opening temp file: %v", err)
 		}
-		defer file.Close()
-		if err := downloadScript(ctx, u.Path, file); err != nil {
+		if err := downloadScript(ctx, value, file); err != nil {
+			file.Close()
 			return err
 		}
+		file.Close()
 	} else {
+		logger.Debugf("writing value directly to file")
 		if err := ioutil.WriteFile(tmpFile, []byte(value), 0755); err != nil {
 			return err
 		}
