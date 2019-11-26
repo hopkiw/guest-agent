@@ -146,41 +146,31 @@ func agentInit() error {
 }
 
 func generateSSHKeys() error {
-	// First remove existing keys.
-	dir, err := os.Open("/etc/ssh")
-	if err != nil {
-		return err
-	}
-	defer dir.Close()
-
-	files, err := dir.Readdirnames(0)
-	if err != nil {
-		return err
-	}
-	for _, file := range files {
-		if strings.HasPrefix(file, "ssh_host_") && strings.HasSuffix(file, "_key") {
-			logger.Debugf("rm ssh key %s", file)
-			if err := os.Remove("/etc/ssh/" + file); err != nil {
-				return err
-			}
-		}
-	}
-
 	// Generate new keys and upload to guest attributes.
 	keyTypes := config.Section("InstanceSetup").Key("host_key_types").MustString("ecdsa,ed25519,rsa")
 	for _, keyType := range strings.Split(keyTypes, ",") {
-		outfile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keyType)
-		logger.Debugf("creating ssh key %s", outfile)
-		if err := runCmd(exec.Command("ssh-keygen", "-t", keyType, "-f", outfile, "-N", "", "-q")); err != nil {
-			return fmt.Errorf("Failed to generate SSH host key %q: %v", outfile, err)
+		keyfile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keyType)
+		if _, err := os.Stat(keyfile); os.IsNotExist(err) {
+			// We only overwrite keys, we don't create new ones.
+			continue
 		}
-		if err := os.Chmod(outfile, 0600); err != nil {
-			return fmt.Errorf("Failed to chmod SSH host key %q: %v", outfile, err)
+		logger.Debugf("creating ssh key %s", keyfile)
+		if err := runCmd(exec.Command("ssh-keygen", "-t", keyType, "-f", keyfile+".temp", "-N", "", "-q")); err != nil {
+			logger.Errorf("Failed to generate SSH host key %q: %v", keyfile, err)
 		}
-		if err := os.Chmod(outfile+".pub", 0644); err != nil {
-			return fmt.Errorf("Failed to chmod SSH host key %q: %v", outfile+".pub", err)
+		if err := os.Chmod(keyfile, 0600); err != nil {
+			logger.Errorf("Failed to chmod SSH host key %q: %v", keyfile, err)
 		}
-		pubKey, err := ioutil.ReadFile(outfile + ".pub")
+		if err := os.Chmod(keyfile+".pub", 0644); err != nil {
+			logger.Errorf("Failed to chmod SSH host key %q: %v", keyfile+".pub", err)
+		}
+		if err := os.Rename(keyfile+".temp", keyfile); err != nil {
+			logger.Errorf("Failed to overwrite %q: %v", keyfile, err)
+		}
+		if err := os.Rename(keyfile+".temp.pub", keyfile+".pub"); err != nil {
+			logger.Errorf("Failed to overwrite %q: %v", keyfile+".pub", err)
+		}
+		pubKey, err := ioutil.ReadFile(keyfile + ".pub")
 		if err != nil {
 			return fmt.Errorf("Can't read %s public key: %v", keyType, err)
 		}
