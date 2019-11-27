@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
 )
@@ -65,6 +66,7 @@ func (o *osloginMgr) set() error {
 		logger.Infof("Enabling OS Login")
 		// Erase SSH keys using the accountsMgr.
 		// TODO: how to ensure it is not running already?
+		time.Sleep(5 * time.Second)
 		newMetadata.Instance.Attributes.SSHKeys = nil
 		newMetadata.Project.Attributes.SSHKeys = nil
 		(&accountsMgr{}).set()

@@ -413,7 +413,7 @@ func configureIPv6() error {
 		// disable
 		// uses empty old interface slice to indicate this is first-run.
 		logger.Debugf("disable ipv6 on eth0")
-		if err := runCmd(exec.Command("dhclient", "-r", "-6", "-v", iface.Name)); err != nil {
+		if err := runCmd(exec.Command("dhclient", "-r", "-6", "-1", "-v", iface.Name)); err != nil {
 			return err
 		}
 	case oldNi.DHCPv6Refresh == "" && newNi.DHCPv6Refresh != "":

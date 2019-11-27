@@ -67,8 +67,11 @@ func (a *accountsMgr) diff() bool {
 	if !compareStringSlice(newMetadata.Project.Attributes.SSHKeys, oldMetadata.Project.Attributes.SSHKeys) {
 		return true
 	}
+	if newMetadata.Instance.Attributes.BlockProjectKeys != oldMetadata.Instance.Attributes.BlockProjectKeys {
+		return true
+	}
 
-	// If any existing keys have expired.
+	// If any on-disk keys have expired.
 	for _, keys := range sshKeys {
 		if len(keys) != len(removeExpiredKeys(keys)) {
 			return true
@@ -125,8 +128,10 @@ func (a *accountsMgr) set() error {
 	var writeFile bool
 	gUsers, err := readGoogleUsersFile()
 	if err != nil {
+		// TODO: is this OK to continue past?
 		logger.Errorf("Couldn't read google users file: %v.", err)
 	}
+	logger.Debugf("gUsers file: %v", gUsers)
 
 	// Update SSH keys, creating Google users as needed.
 	for user, userKeys := range mdKeyMap {
@@ -390,6 +395,7 @@ func createSudoersGroup() error {
 // does not exist. Uses a temporary file to avoid partial updates in case of
 // errors. If no keys are provided, the authorized keys file is removed.
 func updateAuthorizedKeysFile(user string, keys []string) error {
+	logger.Debugf("updateAuthorizedKeysFile(%s, %v)", user, keys)
 	gcomment := "# Added by Google"
 
 	passwd, err := getPasswd(user)
