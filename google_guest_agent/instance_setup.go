@@ -146,38 +146,67 @@ func agentInit() error {
 }
 
 func generateSSHKeys() error {
-	// Generate new keys and upload to guest attributes.
-	keyTypes := config.Section("InstanceSetup").Key("host_key_types").MustString("ecdsa,ed25519,rsa")
-	for _, keyType := range strings.Split(keyTypes, ",") {
-		keyfile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keyType)
-		if _, err := os.Stat(keyfile); os.IsNotExist(err) {
-			// We only overwrite keys, we don't create new ones.
-			continue
+	dir, err := os.Open("/etc/ssh")
+	if err != nil {
+		return err
+	}
+	defer dir.Close()
+
+	files, err := dir.Readdirnames(0)
+	if err != nil {
+		return err
+	}
+
+	var keytypes map[string]bool
+	for _, file := range files {
+		if strings.HasPrefix(file, "ssh_host_") && strings.HasSuffix(file, "_key") {
+			keytype := file
+			keytype = strings.TrimPrefix(keytype, "ssh_host_")
+			keytype = strings.TrimSuffix(keytype, "_key")
+			keytypes[keytype] = true
 		}
-		logger.Debugf("creating ssh key %s", keyfile)
-		if err := runCmd(exec.Command("ssh-keygen", "-t", keyType, "-f", keyfile+".temp", "-N", "", "-q")); err != nil {
-			logger.Errorf("Failed to generate SSH host key %q: %v", keyfile, err)
+	}
+
+	configKeys := config.Section("InstanceSetup").Key("host_key_types").MustString("ecdsa,ed25519,rsa")
+	for _, keytype := range strings.Split(configKeys, ",") {
+		keytypes[keytype] = true
+	}
+
+	// Generate new keys and upload to guest attributes.
+	for keytype, _ := range keytypes {
+		keyfile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keytype)
+		logger.Debugf("Creating ssh key %s", keyfile)
+		if err := runCmd(exec.Command("ssh-keygen", "-t", keytype, "-f", keyfile+".temp", "-N", "", "-q")); err != nil {
+			logger.Warningf("Failed to generate SSH host key %q: %v", keyfile, err)
+			continue
 		}
 		if err := os.Chmod(keyfile, 0600); err != nil {
 			logger.Errorf("Failed to chmod SSH host key %q: %v", keyfile, err)
+			continue
 		}
 		if err := os.Chmod(keyfile+".pub", 0644); err != nil {
 			logger.Errorf("Failed to chmod SSH host key %q: %v", keyfile+".pub", err)
+			continue
 		}
 		if err := os.Rename(keyfile+".temp", keyfile); err != nil {
 			logger.Errorf("Failed to overwrite %q: %v", keyfile, err)
+			continue
 		}
 		if err := os.Rename(keyfile+".temp.pub", keyfile+".pub"); err != nil {
 			logger.Errorf("Failed to overwrite %q: %v", keyfile+".pub", err)
+			continue
 		}
 		pubKey, err := ioutil.ReadFile(keyfile + ".pub")
 		if err != nil {
-			return fmt.Errorf("Can't read %s public key: %v", keyType, err)
+			logger.Errorf("Can't read %s public key: %v", keytype, err)
+			continue
 		}
 		if vals := strings.Split(string(pubKey), " "); len(vals) >= 2 {
 			if err := writeGuestAttributes("hostkeys/"+vals[0], vals[1]); err != nil {
-				return fmt.Errorf("Failed to upload %s key to guest attributes: %v", keyType, err)
+				logger.Errorf("Failed to upload %s key to guest attributes: %v", keytype, err)
 			}
+		} else {
+			logger.Warningf("Generated key is malformed, not uploading")
 		}
 	}
 	return nil
