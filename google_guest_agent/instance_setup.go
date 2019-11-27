@@ -160,15 +160,18 @@ func generateSSHKeys() error {
 	var keytypes map[string]bool
 	for _, file := range files {
 		if strings.HasPrefix(file, "ssh_host_") && strings.HasSuffix(file, "_key") {
+			logger.Debugf("found SSH key %s on disk", file)
 			keytype := file
 			keytype = strings.TrimPrefix(keytype, "ssh_host_")
 			keytype = strings.TrimSuffix(keytype, "_key")
+			logger.Debugf("parsed as keytype %s", keytype)
 			keytypes[keytype] = true
 		}
 	}
 
 	configKeys := config.Section("InstanceSetup").Key("host_key_types").MustString("ecdsa,ed25519,rsa")
 	for _, keytype := range strings.Split(configKeys, ",") {
+		logger.Debugf("found SSH keytype %s in config", keytype)
 		keytypes[keytype] = true
 	}
 

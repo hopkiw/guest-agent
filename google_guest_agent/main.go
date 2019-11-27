@@ -257,7 +257,7 @@ func closer(c io.Closer) {
 }
 
 func main() {
-	opts := logger.LogOpts{LoggerName: programName, Debug: true}
+	opts := logger.LogOpts{LoggerName: programName, Debug: true, Writers: []io.Writer{os.Stdout}}
 	if runtime.GOOS == "windows" {
 		opts.FormatFunction = logFormat
 		opts.Writers = []io.Writer{&serialPort{"COM1"}}
