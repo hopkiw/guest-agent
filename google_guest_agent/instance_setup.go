@@ -158,20 +158,24 @@ func generateSSHKeys() error {
 	}
 
 	keytypes := make(map[string]bool)
+
+	// Find keys present on disk, and deduce their type from filename.
+	prefix := "ssh_host_"
+	suffix := "_key"
 	for _, file := range files {
-		if strings.HasPrefix(file, "ssh_host_") && strings.HasSuffix(file, "_key") {
-			logger.Debugf("found SSH key %s on disk", file)
+		if strings.HasPrefix(file, prefix) && strings.HasSuffix(file, suffix) && len(file) > len(prefix+suffix) {
 			keytype := file
-			keytype = strings.TrimPrefix(keytype, "ssh_host_")
-			keytype = strings.TrimSuffix(keytype, "_key")
-			logger.Debugf("parsed as keytype %s", keytype)
+			keytype = strings.TrimPrefix(keytype, prefix)
+			keytype = strings.TrimSuffix(keytype, suffix)
+			logger.Debugf("found SSH key %s parsed as keytype %s", file, keytype)
 			keytypes[keytype] = true
 		}
 	}
 
+	// List keys we should generate, according to the config.
 	configKeys := config.Section("InstanceSetup").Key("host_key_types").MustString("ecdsa,ed25519,rsa")
 	for _, keytype := range strings.Split(configKeys, ",") {
-		logger.Debugf("found SSH keytype %s in config", keytype)
+		logger.Debugf("found SSH keytype %s from config", keytype)
 		keytypes[keytype] = true
 	}
 
@@ -183,11 +187,11 @@ func generateSSHKeys() error {
 			logger.Warningf("Failed to generate SSH host key %q: %v", keyfile, err)
 			continue
 		}
-		if err := os.Chmod(keyfile, 0600); err != nil {
+		if err := os.Chmod(keyfile+".temp", 0600); err != nil {
 			logger.Errorf("Failed to chmod SSH host key %q: %v", keyfile, err)
 			continue
 		}
-		if err := os.Chmod(keyfile+".pub", 0644); err != nil {
+		if err := os.Chmod(keyfile+".temp.pub", 0644); err != nil {
 			logger.Errorf("Failed to chmod SSH host key %q: %v", keyfile+".pub", err)
 			continue
 		}
