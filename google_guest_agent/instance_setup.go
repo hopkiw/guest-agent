@@ -157,7 +157,7 @@ func generateSSHKeys() error {
 		return err
 	}
 
-	var keytypes map[string]bool
+	keytypes := make(map[string]bool)
 	for _, file := range files {
 		if strings.HasPrefix(file, "ssh_host_") && strings.HasSuffix(file, "_key") {
 			logger.Debugf("found SSH key %s on disk", file)
