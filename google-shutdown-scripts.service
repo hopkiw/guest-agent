@@ -1,7 +1,7 @@
 [Unit]
 Description=Google Compute Engine Shutdown Scripts
 Before=shutdown.target reboot.target
-DefaultDependencies=no  # Don't depend on sysinit or conflict reboot.target.
+DefaultDependencies=no
 
 [Service]
 ExecStart=/usr/bin/google_metadata_script_runner shutdown
