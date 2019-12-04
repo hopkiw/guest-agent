@@ -46,5 +46,6 @@ cd ${PKGNAME}-${VERSION}
 
 cp -r ${working_dir}/packaging/debian ./
 cp -r ${working_dir}/*.service ./debian/
+cp -r ${working_dir}/*.preset ./debian/
 
 debuild -e "VERSION=${VERSION}" -us -uc

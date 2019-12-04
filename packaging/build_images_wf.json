@@ -57,6 +57,38 @@
         {
           "Name": "inst-imgbuild-debian-10",
           "SourceImage": "projects/debian-cloud/global/images/family/debian-10"
+        },
+        {
+          "Name": "rhel-6-nge",
+          "SourceImage": "projects/rhel-cloud/global/images/family/rhel-6"
+        },
+        {
+          "Name": "rhel-7-nge",
+          "SourceImage": "projects/rhel-cloud/global/images/family/rhel-7"
+        },
+        {
+          "Name": "rhel-8-nge",
+          "SourceImage": "projects/rhel-cloud/global/images/family/rhel-8"
+        },
+        {
+          "Name": "centos-8-nge",
+          "SourceImage": "projects/centos-cloud/global/images/family/centos-8"
+        },
+        {
+          "Name": "centos-7-nge",
+          "SourceImage": "projects/centos-cloud/global/images/family/centos-7"
+        },
+        {
+          "Name": "centos-6-nge",
+          "SourceImage": "projects/centos-cloud/global/images/family/centos-6"
+        },
+        {
+          "Name": "debian-9-nge",
+          "SourceImage": "projects/debian-cloud/global/images/family/debian-9"
+        },
+        {
+          "Name": "debian-10-nge",
+          "SourceImage": "projects/debian-cloud/global/images/family/debian-10"
         }
       ]
     },
@@ -64,7 +96,7 @@
       "CreateInstances": [
         {
           "Disks": [
-            {"Source": "inst-imgbuild-debian-9"}
+            {"Source": "inst-imgbuild-debian-9"}, {"Source": "debian-9-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -76,7 +108,7 @@
         },
         {
           "Disks": [
-            {"Source": "inst-imgbuild-debian-10"}
+            {"Source": "inst-imgbuild-debian-10"}, {"Source": "debian-10-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -88,7 +120,7 @@
         },
         {
           "Disks": [
-            {"Source": "inst-imgbuild-rhel-6"}
+            {"Source": "inst-imgbuild-rhel-6"}, {"Source": "rhel-6-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -100,7 +132,7 @@
         },
         {
           "Disks": [
-            {"Source": "inst-imgbuild-rhel-7"}
+            {"Source": "inst-imgbuild-rhel-7"}, {"Source": "rhel-7-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -112,7 +144,7 @@
         },
         {
           "Disks": [
-            {"Source": "inst-imgbuild-rhel-8"}
+            {"Source": "inst-imgbuild-rhel-8"}, {"Source": "rhel-8-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -124,7 +156,7 @@
         },
         {
           "Disks": [
-            {"Source": "inst-imgbuild-centos-6"}
+            {"Source": "inst-imgbuild-centos-6"}, {"Source": "centos-6-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -136,7 +168,7 @@
         },
         {
           "Disks": [
-            {"Source": "inst-imgbuild-centos-7"}
+            {"Source": "inst-imgbuild-centos-7"}, {"Source": "centos-7-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -148,7 +180,7 @@
         },
         {
           "Disks": [
-            {"Source": "inst-imgbuild-centos-8"}
+            {"Source": "inst-imgbuild-centos-8"}, {"Source": "centos-8-nge"}
           ],
           "Metadata": {
             "gcs-dir": "${gcs_path}"
@@ -250,63 +282,66 @@
         {
           "Name": "debian-9-nge",
           "Family": "debian-9-nge",
-          "SourceDisk": "inst-imgbuild-debian-9",
+          "SourceDisk": "debian-9-nge",
           "NoCleanup": true
         },
         {
           "Name": "debian-10-nge",
           "Family": "debian-10-nge",
-          "SourceDisk": "inst-imgbuild-debian-10",
+          "SourceDisk": "debian-10-nge",
           "NoCleanup": true
         },
         {
           "Name": "rhel-6-nge",
           "Family": "rhel-6-nge",
-          "SourceDisk": "inst-imgbuild-rhel-6",
+          "SourceDisk": "rhel-6-nge",
           "NoCleanup": true
         },
         {
           "Name": "rhel-7-nge",
           "Family": "rhel-7-nge",
-          "SourceDisk": "inst-imgbuild-rhel-7",
+          "SourceDisk": "rhel-7-nge",
           "NoCleanup": true
         },
         {
           "Name": "rhel-8-nge",
           "Family": "rhel-8-nge",
-          "SourceDisk": "inst-imgbuild-rhel-8",
+          "SourceDisk": "rhel-8-nge",
           "NoCleanup": true
         },
         {
           "Name": "centos-6-nge",
           "Family": "centos-6-nge",
-          "SourceDisk": "inst-imgbuild-centos-6",
+          "SourceDisk": "centos-6-nge",
           "NoCleanup": true
         },
         {
           "Name": "centos-7-nge",
           "Family": "centos-7-nge",
-          "SourceDisk": "inst-imgbuild-centos-7",
+          "SourceDisk": "centos-7-nge",
           "NoCleanup": true
         },
         {
           "Name": "centos-8-nge",
           "Family": "centos-8-nge",
-          "SourceDisk": "inst-imgbuild-centos-8",
+          "SourceDisk": "centos-8-nge",
           "NoCleanup": true
         }
       ]
     }
   },
   "Dependencies": {
-    "create-images": [
-      "wait-for-build"
-    ],
     "wait-for-build": [
       "install-packages"
     ],
     "install-packages": [
       "create-disks",
+      "build-packages"
+    ],
+    "create-images": [
+      "wait-for-build"
+    ],
+    "create-disks": [
       "build-packages"
     ]
   }
