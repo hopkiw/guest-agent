@@ -80,10 +80,12 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %{_presetdir}/90-%{name}.preset
 %endif
 
+%if ! 0%{?el6}
 %post
 if [ $1 -eq 1 ]; then
   # Initial installation
-  # If there's a leftover service from g-c-e, remove its symlinks first.
+  # If there's a leftover service from g-c-e, remove its symlinks first, as
+  # dependencies have changed.
   if systemctl -q is-enabled google-shutdown-scripts.service 2>/dev/null; then
     systemctl disable google-shutdown-scripts.service
   fi
@@ -131,3 +133,31 @@ if [ $1 -eq 0 ]; then
     rm /etc/default/instance_configs.cfg
   fi
 fi
+
+%else
+
+# EL6
+%post
+if [ $1 -eq 1 ]; then
+  # Initial installation
+  initctl start google-guest-agent >/dev/null 2>&1 || :
+else
+  # Upgrade
+  initctl restart google-guest-agent >/dev/null 2>&1 || :
+fi
+
+%preun
+if [ $1 -eq 0 ]; then
+  # Package removal, not upgrade
+  initctl stop google-guest-agent.service >/dev/null 2>&1 || :
+fi
+
+%postun
+if [ $1 -eq 0 ]; then
+  # Package removal, not upgrade
+  if [ -f /etc/default/instance_configs.cfg ]; then
+    rm /etc/default/instance_configs.cfg
+  fi
+fi
+
+%endif
