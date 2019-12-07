@@ -83,16 +83,12 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %post
 if [ $1 -eq 1 ]; then
   # Initial installation
-  if [ -d /run/systemd/system ]; then
-    # Set to defaults from preset file, which defaults to enable.
-    systemctl preset google-guest-agent.service >/dev/null 2>&1 || :
-    systemctl preset google-startup-scripts.service >/dev/null 2>&1 || :
-    systemctl preset google-shutdown-scripts.service >/dev/null 2>&1 || :
+  systemctl enable google-guest-agent.service >/dev/null 2>&1 || :
+  systemctl enable google-startup-scripts.service >/dev/null 2>&1 || :
+  systemctl enable google-shutdown-scripts.service >/dev/null 2>&1 || :
 
-    # Start the guest agent service, if it hasn't been disabled.
-    if systemctl is-enabled --quiet google-guest-agent.service >/dev/null 2>&1; then
-      systemctl start google-guest-agent.service >/dev/null 2>&1 || :
-    fi
+  if [ -d /run/systemd/system ]; then
+    systemctl start google-guest-agent.service >/dev/null 2>&1 || :
   fi
 
   # Install instance configs if not already present.
@@ -111,7 +107,7 @@ if [ $1 -eq 0 ] && [ -d /run/systemd/system ]; then
   # Package removal, not upgrade
   systemctl --no-reload disable google-guest-agent.service >/dev/null 2>&1 || :
   systemctl stop google-guest-agent.service >/dev/null 2>&1 || :
-  
+
   systemctl --no-reload disable google-startup-scripts.service >/dev/null 2>&1 || :
   systemctl stop google-startup-scripts.service >/dev/null 2>&1 || :
 
@@ -120,7 +116,7 @@ if [ $1 -eq 0 ] && [ -d /run/systemd/system ]; then
   # next boot, but will not be run.
   systemctl --no-reload disable google-shutdown-scripts.service >/dev/null 2>&1 || :
 fi
-  
+
 
 %postun
 if [ $1 -eq 0 ]; then
