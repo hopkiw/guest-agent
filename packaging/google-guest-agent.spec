@@ -149,7 +149,7 @@ fi
 %preun
 if [ $1 -eq 0 ]; then
   # Package removal, not upgrade
-  initctl stop google-guest-agent.service >/dev/null 2>&1 || :
+  initctl stop google-guest-agent >/dev/null 2>&1 || :
 fi
 
 %postun

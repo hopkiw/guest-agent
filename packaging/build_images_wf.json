@@ -8,8 +8,7 @@
   "Vars": {
     "gcs_path": {
       "Required": true,
-      "Description": "GCS path to packages",
-      "Value": "gs://liamh-testing-daisy-bkt/daisy-build-images-20191207-06:48:38-65sqx/packages"
+      "Description": "GCS path to packages"
     }
   },
   "Steps": {
