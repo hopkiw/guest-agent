@@ -58,11 +58,13 @@ fi
 mkdir chroot_dir
 mount -o $opts /dev/sdb1 chroot_dir
 
+
 # Upgrade GCE to break dependency, adds dep on guest-agent.
 object="google-compute-engine*el${VERSION_ID}*.rpm"
 gsutil cp "${GCS_DIR}/${object}" ./chroot_dir/
 object="google-guest-agent*el${VERSION_ID}*.rpm"
 gsutil cp "${GCS_DIR}/${object}" ./chroot_dir/
+
 
 cat > ./chroot_dir/setup.sh <<"EOF"
 #!/bin/bash
@@ -79,7 +81,10 @@ function try_command() {
   done
 }
 
-yum install -y /*rpm
+mknod -m 666 /dev/random c 1 8
+mknod -m 666 /dev/urandom c 1 9
+mount -t proc none /proc
+yum install -y ./*rpm
 rm -f /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
@@ -87,20 +92,18 @@ rm -f /etc/instance_id
 rm -f /etc/ssh/ssh_host_*key*
 sed -i"" 's/SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
 try_command passwd -d root
+umount /proc
 EOF
 
 chmod +x ./chroot_dir/setup.sh
 chroot ./chroot_dir /setup.sh | tee ./chroot_dir/install.log
 
 sync
-ls /chroot_dir/
 umount chroot_dir
 sync
 
-echo after umount
-ls /
-
 sleep 30
 echo "Image build success"
+sleep 30
 
 echo o > /proc/sysrq-trigger

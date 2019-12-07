@@ -83,11 +83,18 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %post
 if [ $1 -eq 1 ]; then
   # Initial installation
+  # If there's a leftover service from g-c-e, remove its symlinks first.
+  if systemctl -q is-enabled google-shutdown-scripts.service 2>/dev/null; then
+    systemctl disable google-shutdown-scripts.service
+  fi
+  # Use enable instead of preset because preset is not supported in
+  # chroot.
   systemctl enable google-guest-agent.service >/dev/null 2>&1 || :
   systemctl enable google-startup-scripts.service >/dev/null 2>&1 || :
   systemctl enable google-shutdown-scripts.service >/dev/null 2>&1 || :
 
   if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || :
     systemctl start google-guest-agent.service >/dev/null 2>&1 || :
   fi
 
@@ -103,20 +110,15 @@ else
 fi
 
 %preun
-if [ $1 -eq 0 ] && [ -d /run/systemd/system ]; then
+if [ $1 -eq 0 ]; then
   # Package removal, not upgrade
   systemctl --no-reload disable google-guest-agent.service >/dev/null 2>&1 || :
-  systemctl stop google-guest-agent.service >/dev/null 2>&1 || :
-
   systemctl --no-reload disable google-startup-scripts.service >/dev/null 2>&1 || :
-  systemctl stop google-startup-scripts.service >/dev/null 2>&1 || :
-
-  # We must not stop the google-shutdown-scripts service, as this would run the
-  # shutdown scripts. The service will remain 'active' and in the service list until
-  # next boot, but will not be run.
   systemctl --no-reload disable google-shutdown-scripts.service >/dev/null 2>&1 || :
+  if [-d /run/systemd/system ]; then
+    systemctl stop google-guest-agent.service >/dev/null 2>&1 || :
+  fi
 fi
-
 
 %postun
 if [ $1 -eq 0 ]; then
