@@ -84,7 +84,7 @@ function try_command() {
 mknod -m 666 /dev/random c 1 8
 mknod -m 666 /dev/urandom c 1 9
 mount -t proc none /proc
-yum install -y ./*rpm
+rpm -Uvh /*rpm
 rm -f /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google

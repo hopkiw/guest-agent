@@ -9,10 +9,21 @@
     "gcs_path": {
       "Required": true,
       "Description": "GCS path to packages",
-      "Value": "gs://liamh-testing-daisy-bkt/daisy-build-images-20191207-06:48:38-65sqx/packages"
+      "Value": "${SCRATCHPATH}/packages"
     }
   },
   "Steps": {
+    "build-packages": {
+      "SubWorkflow": {
+        "Path": "./build_packages_wf.json",
+        "Vars": {
+          "gcs_path": "${gcs_path}",
+          "base_repo": "hopkiw",
+          "repo": "guest-agent",
+          "pull_ref": "build"
+        }
+      }
+    },
     "create-disks": {
       "CreateDisks": [
         {
@@ -324,10 +335,14 @@
       "install-packages"
     ],
     "install-packages": [
-      "create-disks"
+      "create-disks",
+      "build-packages"
     ],
     "create-images": [
       "wait-for-build"
+    ],
+    "create-disks": [
+      "build-packages"
     ]
   }
 }
