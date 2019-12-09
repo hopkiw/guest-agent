@@ -141,6 +141,11 @@ fi
 if [ $1 -eq 1 ]; then
   # Initial installation
   initctl start google-guest-agent >/dev/null 2>&1 || :
+
+  # Install instance configs if not already present.
+  if [ ! -f /etc/default/instance_configs.cfg ]; then
+    cp -a /usr/share/google-guest-agent/instance_configs.cfg /etc/default/
+  fi
 else
   # Upgrade
   initctl restart google-guest-agent >/dev/null 2>&1 || :

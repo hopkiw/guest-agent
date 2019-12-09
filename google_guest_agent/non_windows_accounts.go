@@ -347,7 +347,7 @@ func createGoogleUser(user string) error {
 // permissions are removed but the user remains on the system. Group membership
 // is not changed.
 func removeGoogleUser(user string) error {
-	if config.Section("Accounts").Key("deprovision_remove").MustBool(true) {
+	if config.Section("Accounts").Key("deprovision_remove").MustBool(false) {
 		userdel := config.Section("Accounts").Key("userdel_cmd").MustString("userdel -r {user}")
 		return runCmd(createUserGroupCmd(userdel, user, ""))
 	}
