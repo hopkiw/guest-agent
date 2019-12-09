@@ -326,6 +326,7 @@ func (a *addressMgr) set() error {
 			}
 		}
 
+		logger.Debugf("comparing forwarded %v to wanted %v", forwardedIPs, wantIPs)
 		toAdd, toRm := compareIPs(forwardedIPs, wantIPs)
 
 		if len(toAdd) != 0 || len(toRm) != 0 {
@@ -413,6 +414,14 @@ func configureIPv6() error {
 		// disable
 		// uses empty old interface slice to indicate this is first-run.
 		logger.Debugf("disable ipv6 on eth0")
+		tentative := exec.Command("ip", "-6", "-o", "a", "s", "dev", iface.Name, "scope", "link", "tentative")
+		for i := 0; i < 5; i++ {
+			res := runCmdOutput(tentative)
+			if res.ExitCode() == 0 && res.Stdout() == "" {
+				break
+			}
+			time.Sleep(1 * time.Second)
+		}
 		if err := runCmd(exec.Command("dhclient", "-r", "-6", "-1", "-v", iface.Name)); err != nil {
 			return err
 		}
