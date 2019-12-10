@@ -84,13 +84,14 @@ install -p -m 0644 90-%{name}.preset %{buildroot}%{_presetdir}/90-%{name}.preset
 %post
 if [ $1 -eq 1 ]; then
   # Initial installation
-  # If there's a leftover service from g-c-e, remove its symlinks first, as
-  # dependencies have changed.
-  if systemctl -q is-enabled google-shutdown-scripts.service 2>/dev/null; then
-    systemctl disable google-shutdown-scripts.service
+
+  # Install instance configs if not already present.
+  if [ ! -f /etc/default/instance_configs.cfg ]; then
+    cp -a /usr/share/google-guest-agent/instance_configs.cfg /etc/default/
   fi
+
   # Use enable instead of preset because preset is not supported in
-  # chroot.
+  # chroots.
   systemctl enable google-guest-agent.service >/dev/null 2>&1 || :
   systemctl enable google-startup-scripts.service >/dev/null 2>&1 || :
   systemctl enable google-shutdown-scripts.service >/dev/null 2>&1 || :
@@ -98,11 +99,6 @@ if [ $1 -eq 1 ]; then
   if [ -d /run/systemd/system ]; then
     systemctl daemon-reload >/dev/null 2>&1 || :
     systemctl start google-guest-agent.service >/dev/null 2>&1 || :
-  fi
-
-  # Install instance configs if not already present.
-  if [ ! -f /etc/default/instance_configs.cfg ]; then
-    cp -a /usr/share/google-guest-agent/instance_configs.cfg /etc/default/
   fi
 else
   # Package upgrade
@@ -125,12 +121,13 @@ fi
 %postun
 if [ $1 -eq 0 ]; then
   # Package removal, not upgrade
-  if [ -d /run/systemd/system ]; then
-    systemctl daemon-reload >/dev/null 2>&1 || :
-  fi
 
   if [ -f /etc/default/instance_configs.cfg ]; then
     rm /etc/default/instance_configs.cfg
+  fi
+
+  if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || :
   fi
 fi
 
@@ -139,13 +136,13 @@ fi
 # EL6
 %post
 if [ $1 -eq 1 ]; then
-  # Initial installation
-  initctl start google-guest-agent >/dev/null 2>&1 || :
-
   # Install instance configs if not already present.
   if [ ! -f /etc/default/instance_configs.cfg ]; then
     cp -a /usr/share/google-guest-agent/instance_configs.cfg /etc/default/
   fi
+
+  # Initial installation
+  initctl start google-guest-agent >/dev/null 2>&1 || :
 else
   # Upgrade
   initctl restart google-guest-agent >/dev/null 2>&1 || :
