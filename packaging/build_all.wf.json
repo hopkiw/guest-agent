@@ -200,7 +200,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
@@ -210,7 +209,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
@@ -220,7 +218,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
@@ -230,7 +227,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
@@ -240,7 +236,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
@@ -250,7 +245,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
@@ -260,7 +254,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
@@ -270,7 +263,6 @@
           "Stopped": true,
           "SerialOutput": {
             "Port": 1,
-            "SuccessMatch": "Image build success",
             "FailureMatch": "Image build failed",
             "StatusMatch": "Image build status"
           }
