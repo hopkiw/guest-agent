@@ -84,12 +84,12 @@ function try_command() {
 mknod -m 666 /dev/random c 1 8
 mknod -m 666 /dev/urandom c 1 9
 mount -t proc none /proc
-rpm -Uvh /*rpm
 rm -f /etc/boto.cfg
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
 rm -f /etc/instance_id
 rm -f /etc/ssh/ssh_host_*key*
+rpm -Uvh /*rpm
 sed -i"" 's/SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
 try_command passwd -d root
 umount /proc

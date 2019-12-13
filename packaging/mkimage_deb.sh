@@ -67,16 +67,14 @@ function try_command() {
   done
 }
 
-DEBIAN_FRONTEND=noninteractive apt install -y /*.deb
-#DEBIAN_FRONTEND=noninteractive apt purge -y python*google-compute-engine
-#systemctl stop google-guest-agent
 
 rm -f /etc/sudoers.d/google*
 rm -rf /var/lib/google
 rm -f /etc/boto.cfg
 rm -f /etc/instance_id
 rm -f /etc/ssh/ssh_host_*key*
-#userdel -rf liamh || :
+rm -f /etc/default/instance_configs.cfg
+DEBIAN_FRONTEND=noninteractive apt install -y /*.deb
 try_command passwd -d root
 for f in /usr/share/initramfs-tools/scripts/local-{premount/expand_rootfs,bottom/xfs_growfs}; do
 [[ -f $f ]] && sed -i"" 's/log_failure_message/log_failure_msg/' "$f"
