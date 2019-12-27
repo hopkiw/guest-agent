@@ -90,7 +90,7 @@ rm -rf /var/lib/google
 rm -f /etc/instance_id
 rm -f /etc/ssh/ssh_host_*key*
 rpm -Uvh /*rpm
-sed -i"" 's/SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
+#sed -i"" 's/SELINUX=enforcing/SELINUX=permissive/' /etc/selinux/config
 try_command passwd -d root
 umount /proc
 EOF
