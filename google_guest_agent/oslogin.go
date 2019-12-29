@@ -118,14 +118,14 @@ func filterGoogleLines(contents string) []string {
 	var filtered []string
 	for _, line := range strings.Split(contents, "\n") {
 		switch {
-		case strings.Contains(line, googleComment):
+		case strings.Contains(line, googleComment) && !isgoogleblock:
 			isgoogle = true
 		case isgoogle:
 			isgoogle = false
-		case isgoogleblock, strings.Contains(line, googleBlockStart):
-			isgoogleblock = true
 		case strings.Contains(line, googleBlockEnd):
 			isgoogleblock = false
+		case isgoogleblock, strings.Contains(line, googleBlockStart):
+			isgoogleblock = true
 		default:
 			filtered = append(filtered, line)
 		}
@@ -164,7 +164,7 @@ func updateSSHConfig(enable, twofactor bool) error {
 		filtered = append(osLoginBlock, filtered...)
 	}
 	proposed := strings.Join(filtered, "\n")
-	if proposed != string(sshConfig) {
+	if proposed != "" && proposed != string(sshConfig) {
 		file, err := os.OpenFile("/etc/ssh/sshd_config", os.O_WRONLY|os.O_TRUNC, 0777)
 		if err != nil {
 			return err
