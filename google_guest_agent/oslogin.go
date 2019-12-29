@@ -146,19 +146,22 @@ func (o *osloginMgr) set() error {
 	return nil
 }
 
+// Removes Google comments and lines following, or lines within Google comment blocks.
 func filterGoogleLines(contents string) []string {
 	var isgoogle, isgoogleblock bool
 	var filtered []string
 	for _, line := range strings.Split(contents, "\n") {
 		switch {
-		case strings.Contains(line, googleComment):
+		case strings.Contains(line, googleComment) && !isgoogleblock:
+			// googleComment lines not handled within googleBlock
 			isgoogle = true
 		case isgoogle:
 			isgoogle = false
+		case strings.Contains(line, googleBlockEnd):
+			isgoogle = false
+			isgoogleblock = false
 		case isgoogleblock, strings.Contains(line, googleBlockStart):
 			isgoogleblock = true
-		case strings.Contains(line, googleBlockEnd):
-			isgoogleblock = false
 		default:
 			filtered = append(filtered, line)
 		}
@@ -186,6 +189,7 @@ func updateSSHConfig(enable, twofactor bool) error {
 	}
 
 	filtered := filterGoogleLines(string(sshConfig))
+	logger.Debugf("filtered result is %v lines long\n", len(filtered))
 
 	if enable {
 		osLoginBlock := []string{googleBlockStart, authorizedKeysCommand, authorizedKeysUser}
@@ -196,8 +200,10 @@ func updateSSHConfig(enable, twofactor bool) error {
 		osLoginBlock = append(osLoginBlock, googleBlockEnd)
 		filtered = append(osLoginBlock, filtered...)
 	}
+	logger.Debugf("filtered result with options is %v lines long\n", len(filtered))
 	proposed := strings.Join(filtered, "\n")
-	if proposed != string(sshConfig) {
+	if proposed != "" && proposed != string(sshConfig) {
+		logger.Debugf("writing sshd_config\n")
 		file, err := os.OpenFile("/etc/ssh/sshd_config", os.O_WRONLY|os.O_TRUNC, 0777)
 		if err != nil {
 			return err
@@ -267,6 +273,8 @@ func updatePAMConfig(enable, twofactor bool) error {
 		return err
 	}
 	filtered := filterGoogleLines(string(pamsshd))
+	logger.Debugf("filtered pam sshd is %v lines long\n", len(filtered))
+
 	if enable {
 		topOfFile := []string{googleBlockStart}
 		if twofactor {
@@ -277,6 +285,8 @@ func updatePAMConfig(enable, twofactor bool) error {
 		filtered = append(topOfFile, filtered...)
 		filtered = append(filtered, bottomOfFile...)
 	}
+
+	logger.Debugf("filtered pam sshd with options is %v lines long\n", len(filtered))
 	proposed := strings.Join(filtered, "\n")
 	if proposed != string(pamsshd) {
 		file, err := os.OpenFile("/etc/pam.d/sshd", os.O_WRONLY|os.O_TRUNC, 0777)
@@ -294,9 +304,11 @@ func updatePAMConfig(enable, twofactor bool) error {
 		return err
 	}
 	filtered = filterGoogleLines(string(pamsu))
+	logger.Debugf("filtered pam su is %v lines long\n", len(filtered))
 	if enable {
 		filtered = append([]string{googleComment, accountSu}, filtered...)
 	}
+	logger.Debugf("filtered pam su with options is %v lines long\n", len(filtered))
 	proposed = strings.Join(filtered, "\n")
 	if proposed != string(pamsu) {
 		file2, err := os.OpenFile("/etc/pam.d/su", os.O_WRONLY|os.O_TRUNC, 0777)
