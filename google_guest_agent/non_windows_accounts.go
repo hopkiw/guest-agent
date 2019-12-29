@@ -26,7 +26,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/GoogleCloudPlatform/guest-logging-go/logger"
@@ -126,6 +125,7 @@ func (a *accountsMgr) set() error {
 		mdKeyMap[user] = userKeys
 	}
 
+	var writeFile bool
 	gUsers, err := readGoogleUsersFile()
 	if err != nil {
 		// TODO: is this OK to continue past?
@@ -142,6 +142,7 @@ func (a *accountsMgr) set() error {
 				continue
 			}
 			gUsers[user] = ""
+			writeFile = true
 		}
 		if _, ok := gUsers[user]; !ok {
 			logger.Infof("Adding existing user %s to google-sudoers group.", user)
@@ -172,8 +173,10 @@ func (a *accountsMgr) set() error {
 	}
 
 	// Update the google_users file to reflect if we've added or removed any users.
-	if err := writeGoogleUsersFile(); err != nil {
-		logger.Errorf("Error writing google_users file: %v.", err)
+	if writeFile {
+		if err := writeGoogleUsersFile(); err != nil {
+			logger.Errorf("Error writing google_users file: %v.", err)
+		}
 	}
 	return nil
 }
@@ -330,11 +333,7 @@ func createUserGroupCmd(cmd, user, group string) *exec.Cmd {
 func createGoogleUser(user string) error {
 	var uid string
 	if config.Section("Accounts").Key("reuse_homedir").MustBool(false) {
-		if dir, err := os.Stat(fmt.Sprintf("/home/%s", user)); err == nil {
-			if stat, ok := dir.Sys().(*syscall.Stat_t); ok {
-				uid = fmt.Sprintf("%d", stat.Uid)
-			}
-		}
+		uid = getUID(fmt.Sprintf("/home/%s", user))
 	}
 	if err := createUser(user, uid); err != nil {
 		return err

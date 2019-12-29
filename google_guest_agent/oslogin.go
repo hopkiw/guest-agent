@@ -63,25 +63,9 @@ func (o *osloginMgr) set() error {
 
 	if enable && !oldEnable {
 		logger.Infof("Enabling OS Login")
-		// On 'enable', we must remove SSH keys and possibly user accounts from metadata.
-		gUsers, err := readGoogleUsersFile()
-		if err != nil {
-			logger.Errorf("Couldn't read google users file: %v.", err)
-			gUsers = map[string]string{}
-		}
-		for user := range gUsers {
-			if err := updateAuthorizedKeysFile(user, []string{}); err != nil {
-				logger.Errorf("Error erasing SSH keys for %s: %v.", user, err)
-			}
-			if err = removeGoogleUser(user); err != nil {
-				logger.Errorf("Error removing user: %v.", err)
-			}
-		}
-
-		// Update the google_users file to reflect if we've added or removed any users.
-		if err := writeGoogleUsersFile(); err != nil {
-			logger.Errorf("Error writing google_users file: %v.", err)
-		}
+		newMetadata.Instance.Attributes.SSHKeys = nil
+		newMetadata.Project.Attributes.SSHKeys = nil
+		(&accountsMgr{}).set()
 	}
 
 	// The following functions update the configurations to the desired state and can be run regardless of setting.
@@ -110,31 +94,21 @@ func (o *osloginMgr) set() error {
 		// Services which need to be restarted primarily due to caching
 		// issues. Only do this if we think this was not already enabled.
 		// Services are grouped up this way to avoid restarting a
-		// service twice if it exists under two names. First name wins.
+		// service twice if it exists under two names.
 		if !isEnabled {
-			for _, svc := range []string{"ssh", "sshd"} {
-				if err := restartService(svc); err != nil {
-					logger.Errorf("Error restarting service: %v.", err)
-				} else {
-					break
+			for _, svcs := range [][]string{
+				[]string{"ssh", "sshd"},
+				[]string{"nscd", "unscd"},
+				[]string{"systemd-logind"},
+				[]string{"cron", "crond"},
+			} {
+				for _, svc := range svcs {
+					if err := restartService(svc); err != nil {
+						logger.Errorf("Error restarting service: %v.", err)
+					} else {
+						break
+					}
 				}
-			}
-			for _, svc := range []string{"nscd", "unscd"} {
-				if err := restartService(svc); err != nil {
-					logger.Errorf("Error restarting service: %v.", err)
-				} else {
-					break
-				}
-			}
-			for _, svc := range []string{"cron", "crond"} {
-				if err := restartService(svc); err != nil {
-					logger.Errorf("Error restarting service: %v.", err)
-				} else {
-					break
-				}
-			}
-			if err := restartService("systemd-logind"); err != nil {
-				logger.Errorf("Error restarting service: %v.", err)
 			}
 		}
 
@@ -153,12 +127,10 @@ func filterGoogleLines(contents string) []string {
 	for _, line := range strings.Split(contents, "\n") {
 		switch {
 		case strings.Contains(line, googleComment) && !isgoogleblock:
-			// googleComment lines not handled within googleBlock
 			isgoogle = true
 		case isgoogle:
 			isgoogle = false
 		case strings.Contains(line, googleBlockEnd):
-			isgoogle = false
 			isgoogleblock = false
 		case isgoogleblock, strings.Contains(line, googleBlockStart):
 			isgoogleblock = true

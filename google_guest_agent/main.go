@@ -102,7 +102,7 @@ func runUpdate() {
 	mgrs := []manager{&addressMgr{}}
 	switch runtime.GOOS {
 	case "windows":
-		mgrs = append(mgrs, []manager{newWsfcManager(), &winAccountsMgr{}}...)
+		mgrs = append(mgrs, []manager{newWsfcManager(), &winAccountsMgr{}, &diagnosticsMgr{}}...)
 	default:
 		mgrs = append(mgrs, []manager{&clockskewMgr{}, &osloginMgr{}, &accountsMgr{}}...)
 	}
@@ -227,10 +227,9 @@ func runCmdOutput(cmd *exec.Cmd) *execResult {
 	err := cmd.Run()
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
-			return &execResult{code: ee.ExitCode(), err: stderr.String()}
-		} else {
-			return &execResult{code: -1, err: err.Error()}
+			return &execResult{code: ee.ExitCode(), out: stdout.String(), err: stderr.String()}
 		}
+		return &execResult{code: -1, err: err.Error()}
 	}
 	return &execResult{code: 0, out: stdout.String()}
 }

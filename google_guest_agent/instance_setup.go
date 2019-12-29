@@ -29,6 +29,10 @@ import (
 	"github.com/go-ini/ini"
 )
 
+const (
+	instanceIDFile = "/etc/google_instance_id"
+)
+
 func forwardEntryExists(fes []ipForwardEntry, fe ipForwardEntry) bool {
 	for _, e := range fes {
 		if e.ipForwardIfIndex == fe.ipForwardIfIndex && e.ipForwardDest.Equal(fe.ipForwardDest) {
@@ -95,7 +99,7 @@ func agentInit() error {
 		// Check if instance ID has changed, and if so, consider this
 		// the first boot of the instance.
 		// TODO Also do this for windows. liamh@13-11-2019
-		instanceID, err := ioutil.ReadFile("/etc/google_instance_id")
+		instanceID, err := ioutil.ReadFile(instanceIDFile)
 		if err != nil && !os.IsNotExist(err) {
 			logger.Warningf("Not running first-boot actions, error reading instance ID: %v", err)
 		} else {
@@ -103,7 +107,7 @@ func agentInit() error {
 				// If the file didn't exist or was empty, try legacy key from instance configs.
 				instanceID = []byte(config.Section("Instance").Key("instance_id").String())
 				towrite := fmt.Sprintf("%s\n", newMetadata.Instance.ID.String())
-				if err := ioutil.WriteFile("/etc/google_instance_id", []byte(towrite), 0644); err != nil {
+				if err := ioutil.WriteFile(instanceIDFile, []byte(towrite), 0644); err != nil {
 					logger.Warningf("Failed to write instance ID file: %v", err)
 				}
 			}
@@ -116,7 +120,7 @@ func agentInit() error {
 					logger.Warningf("Failed to create boto.cfg: %v", err)
 				}
 				towrite := fmt.Sprintf("%s\n", newMetadata.Instance.ID.String())
-				if err := ioutil.WriteFile("/etc/google_instance_id", []byte(towrite), 0644); err != nil {
+				if err := ioutil.WriteFile(instanceIDFile, []byte(towrite), 0644); err != nil {
 					logger.Warningf("Failed to write instance ID file: %v", err)
 				}
 			}
@@ -182,7 +186,7 @@ func generateSSHKeys() error {
 	}
 
 	// Generate new keys and upload to guest attributes.
-	for keytype, _ := range keytypes {
+	for keytype := range keytypes {
 		keyfile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keytype)
 		logger.Debugf("Creating ssh key %s", keyfile)
 		if err := runCmd(exec.Command("ssh-keygen", "-t", keytype, "-f", keyfile+".temp", "-N", "", "-q")); err != nil {
