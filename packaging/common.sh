@@ -14,7 +14,7 @@
 # limitations under the License.
 
 export PKGNAME="google-guest-agent"
-export VERSION="20191118.00"
+export VERSION="20191229.00"
 
 function exit_error() {
   echo "build failed: $0:$1 \"$BASH_COMMAND\" returned $?"
