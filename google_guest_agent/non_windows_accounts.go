@@ -245,12 +245,24 @@ func getPasswd(user string) (*passwdEntry, error) {
 	return nil, fmt.Errorf("User not found")
 }
 
+func setContext(path string) error {
+	restoreCon, err := exec.LookPath("restorecon")
+	if err != nil {
+		return nil
+	}
+	if err := runCmd(exec.Command(restoreCon, path)); err != nil {
+		logger.Warningf("Error restoring SELinux context on %q: %v", path, err)
+	}
+	return nil
+}
+
 func writeGoogleUsersFile() error {
 	dir := path.Dir(googleUsersFile)
 	if _, err := os.Stat(dir); err != nil {
 		if err = os.Mkdir(dir, 0755); err != nil {
 			return err
 		}
+		setContext(dir)
 	}
 
 	gfile, err := os.OpenFile(googleUsersFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
@@ -260,6 +272,7 @@ func writeGoogleUsersFile() error {
 			fmt.Fprintf(gfile, "%s\n", user)
 		}
 	}
+	setContext(googleUsersFile)
 	return err
 }
 
@@ -375,6 +388,7 @@ func createSudoersFile() error {
 	}
 	defer sudoFile.Close()
 	fmt.Fprintf(sudoFile, "%%google-sudoers ALL=(ALL:ALL) NOPASSWD:ALL\n")
+	setContext("/etc/sudoers.d/google_sudoers")
 	return nil
 }
 
@@ -422,6 +436,7 @@ func updateAuthorizedKeysFile(user string, keys []string) error {
 			if err = os.Chown(sshpath, passwd.UID, passwd.GID); err != nil {
 				return err
 			}
+			setContext(sshpath)
 		} else {
 			return err
 		}
@@ -476,5 +491,6 @@ func updateAuthorizedKeysFile(user string, keys []string) error {
 		os.Remove(tempPath)
 		return fmt.Errorf("error setting ownership of new keys file: %v", err)
 	}
+	setContext(tempPath)
 	return os.Rename(tempPath, akpath)
 }

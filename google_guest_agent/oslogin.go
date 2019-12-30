@@ -296,16 +296,12 @@ func updatePAMConfig(enable, twofactor bool) error {
 
 // Creates necessary OS Login directories if they don't exist.
 func createOSLoginDirs() error {
-	restorecon, restoreconerr := exec.LookPath("restorecon")
-
 	for _, dir := range []string{"/var/google-sudoers.d", "/var/google-users.d"} {
 		err := os.Mkdir(dir, 0750)
 		if err != nil && !os.IsExist(err) {
 			return err
 		}
-		if restoreconerr == nil {
-			runCmd(exec.Command(restorecon, dir))
-		}
+		setContext(dir)
 	}
 	return nil
 }
@@ -324,6 +320,7 @@ func createOSLoginSudoersFile() error {
 		return err
 	}
 	fmt.Fprintf(sudoFile, "#includedir /var/google-sudoers.d\n")
+	setContext(osloginSudoers)
 	return sudoFile.Close()
 }
 
