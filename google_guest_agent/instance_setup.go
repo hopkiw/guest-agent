@@ -111,8 +111,9 @@ func agentInit() error {
 					logger.Warningf("Failed to write instance ID file: %v", err)
 				}
 			}
-			if newMetadata.Instance.ID.String() != string(instanceID) {
+			if newMetadata.Instance.ID.String() != strings.TrimRight(string(instanceID), "\n") {
 				logger.Infof("Instance ID changed, running first-boot actions")
+				logger.Debugf("Instance ID from metadata: %q, Instance ID from file: %q", newMetadata.Instance.ID.String(), string(instanceID))
 				if err := generateSSHKeys(); err != nil {
 					logger.Warningf("Failed to generate SSH keys: %v", err)
 				}
