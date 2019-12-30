@@ -125,7 +125,6 @@ func (a *accountsMgr) set() error {
 		mdKeyMap[user] = userKeys
 	}
 
-	var writeFile bool
 	gUsers, err := readGoogleUsersFile()
 	if err != nil {
 		// TODO: is this OK to continue past?
@@ -142,7 +141,6 @@ func (a *accountsMgr) set() error {
 				continue
 			}
 			gUsers[user] = ""
-			writeFile = true
 		}
 		if _, ok := gUsers[user]; !ok {
 			logger.Infof("Adding existing user %s to google-sudoers group.", user)
@@ -173,10 +171,8 @@ func (a *accountsMgr) set() error {
 	}
 
 	// Update the google_users file to reflect if we've added or removed any users.
-	if writeFile {
-		if err := writeGoogleUsersFile(); err != nil {
-			logger.Errorf("Error writing google_users file: %v.", err)
-		}
+	if err := writeGoogleUsersFile(); err != nil {
+		logger.Errorf("Error writing google_users file: %v.", err)
 	}
 	return nil
 }
