@@ -12,3 +12,6 @@ ExecStop=/usr/bin/google_metadata_script_runner shutdown
 TimeoutStopSec=0
 KillMode=process
 StandardOutput=journal+console
+
+[Install]
+WantedBy=multi-user.target
