@@ -1,6 +1,4 @@
-# Produces: google-guest-agent (DEB, RPM), google-compute-engine-windows and google-compute-engine-metadata-scripts (GOO)
-
-## Guest Agent for Google Compute Engine
+# Guest Agent for Google Compute Engine
 
 This repo contains the guest agent and metadata script runner components
 installed on Google supported Google Compute Engine
@@ -19,7 +17,9 @@ installed on Google supported Google Compute Engine
 
 ## Overview
 
+
 The **guest agent** takes on-guest actions needed to support GCE functionality.
+
 By default the agent manages the following on Linux:
 
 * On-boot system configuration
@@ -28,7 +28,7 @@ By default the agent manages the following on Linux:
 * Network interface configuration and IP forwarding support.
 * System clock syncing.
 
-And on Windows:
+And manages the following on Windows:
 
 * Network interface configuration and IP forwarding support.
 * Password reset and account creation.
@@ -39,17 +39,25 @@ https://cloud.google.com/compute/docs/tutorials/running-windows-server-failover-
 On both operating systems, the metadata script runner implements support for
 running user provided startup scripts and shutdown scripts.
 
-Functionality can be disabled and settings provided in the instance_configs.cfg
-file.
-
 Packaging configuration files are provided for Debian, RPM and Googet packages.
-On Linux, these packages contain systemd (or upstart, on EL6 systems)
+On Linux, these packages also contain systemd (or upstart, on EL6 systems)
 configurations for running the agent and the metadata scripts.
 
 The Linux guest environment is written in Go. The design of the agent is
 detailed in the sections below.
 
-#### Logging
+## Technical details
+
+### Packages
+
+The packaging configuration in this repo produces the following packages:
+
+* google-guest-agent-$VERSION.el$DIST.rpm, where DIST can be 6, 7, or 8
+* google-guest-agent_$VERSION_amd64.deb
+* google-compute-engine-windows.x86_64.$VERSION.goo
+* google-compute-engine-metadata-scripts.x86_64.$VERSION.goo
+
+### Logging
 
 The guest agent and metadata script runner use the guest-logging-go library to
 log to the serial port, the relevant system logger (syslog or windows event
@@ -57,11 +65,14 @@ log), and google cloud logging. On systems running systemd, the syslog output wi
 captured in the systemd journal and can be viewed with `journalctl -u
 google-guest-agent`.
 
-#### Linux account management
+## Features
+
+### Linux account management
 
 The guest agent is responsible for provisioning and deprovisioning user
-accounts. The agent creates user accounts and generates an authorized keys file
-on the host to permit SSH login. User account creation is based on
+accounts. For users with SSH keys in metadata, the agent creates a local user
+account and generates an authorized keys file to permit SSH login. User account
+creation is based on 
 [adding and removing SSH Keys](https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys)
 stored in metadata. The authorized keys file for a Google managed user is
 deleted when all SSH keys for the user are removed from metadata.
@@ -71,25 +82,28 @@ group and the group is configured to provide root access via sudo.
 
 User accounts not managed by Google are not modified by the accounts daemon.
 
-#### Clock Skew
+### Clock Skew
 
 The guest agent is responsible for syncing the software clock with the hypervisor
 clock after a stop/start event or after a migration. Preventing clock skew may
 result in `system time has changed` messages in VM logs.
 
-#### Network
+### Network
 
 The guest agent uses network interface metadata to manage the network interfaces
 in the guest. This involves the following:
 
 *   Enabling all network interfaces on boot.
 *   Uses IP forwarding metadata to setup or remove IP routes in the guest.
+    *   Supports creating routes for forwarded IPs, target IPs and alias IPs.
     *   Only IPv4 IP addresses are currently supported.
     *   Routes are set on the primary network interface.
     *   Google routes are configured, by default, with the routing protocol ID
         `66`. This ID is a namespace for daemon configured IP addresses.
 
-## Instance Setup Actions
+Links for these three types of IPs?
+
+### Instance Setup Actions
 
 Instance setup actions run during VM boot. The script configures the Linux guest
 environment by performing the following tasks.
@@ -101,7 +115,7 @@ environment by performing the following tasks.
 *   Set the `boto` config for using Google Cloud Storage.
 *   Create the defaults configuration file.
 
-## Metadata Scripts
+### Metadata Scripts
 
 Metadata scripts implement support for running user provided
 [startup scripts](https://cloud.google.com/compute/docs/startupscript) and
@@ -115,6 +129,17 @@ design details.
 *   If multiple metadata keys are specified (e.g. `startup-script` and
     `startup-script-url`) a URL is executed first.
 *   The exit status of a metadata script is logged after completed execution.
+
+### OS Login
+
+Although the binary components which enable OS Login to function are stored in
+their own repository, the guest agent is currently responsible for making the
+necessary configuration changes to the system such as modifying the NSS, SSHD
+and PAM configurations.
+
+https://github.com/GoogleCloudPlatform/guest-oslogin/
+
+https://cloud.google.com/compute/docs/oslogin/
 
 ## Configuration
 
@@ -164,6 +189,7 @@ Keys in the 'Daemons' section retain their names from an earlier edition of
 software that existed as multiple independent daemons, but function as
 described.
 
+### Interaction of settings:
 Setting `network_enabled` to `false` will skip setting up host keys and the
 `boto` config in the guest. As a result, the `set_boto_config` and
 `set_host_keys` keys have no meaning in this case. The setting will also prevent
