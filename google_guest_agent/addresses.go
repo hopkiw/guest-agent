@@ -524,7 +524,7 @@ func enableNetworkInterfaces() error {
 		dhclientArgs := []string{}
 		// The dhclient_script key has historically only been supported on EL6.
 		if (osRelease.os == "rhel" || osRelease.os == "centos") && osRelease.version.major == 6 {
-			dhclientArgs = append(dhclientArgs, "-sf", config.Section("NetworkInterfaces").Key("dhclient_script").MustString("/sbin/google-dhclient-script"))
+			dhclientArgs = append(dhclientArgs, "-sf", config.Section("NetworkInterfaces").Key("dhclient_script").MustString("/usr/sbin/google-dhclient-script"))
 		}
 		dhclientArgs = append(dhclientArgs, googleInterfaces...)
 		return runCmd(exec.Command("dhclient", dhclientArgs...))

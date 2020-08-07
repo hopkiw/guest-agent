@@ -90,6 +90,14 @@ if [ $1 -eq 1 ]; then
     cp -a /usr/share/google-guest-agent/instance_configs.cfg /etc/default/
   fi
 
+  # Fix incorrect path in file if not modified by user.
+  if diff /etc/default/instance_configs.cfg \
+  /usr/share/google-guest-agent/instance_configs.cfg >/dev/null; then
+    sed -i"" \
+    's#= /sbin/google-dhclient-script#= /usr/sbin/google-dhclient-script#' \
+    /etc/default/instance_configs.cfg
+  fi
+
   # Use enable instead of preset because preset is not supported in
   # chroots.
   systemctl enable google-guest-agent.service >/dev/null 2>&1 || :
