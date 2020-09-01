@@ -46,7 +46,7 @@ On Linux: If OS Login is not used, the guest agent will be responsible for
 provisioning and deprovisioning user accounts. The agent creates local user
 accounts and maintains the authorized SSH keys file for each. User account
 creation is based on
-[adding and remove SSH Keys](https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys)
+[adding and removing SSH Keys](https://cloud.google.com/compute/docs/instances/adding-removing-ssh-keys)
 stored in metadata.
 
 The guest agent has the following behaviors:
@@ -138,8 +138,8 @@ The guest agent will perform some actions one time only, on the first VM boot:
 Metadata scripts implement support for running user provided
 [startup scripts](https://cloud.google.com/compute/docs/startupscript) and
 [shutdown scripts](https://cloud.google.com/compute/docs/shutdownscript). The
-guest support for metadata scripts is implemented in Python with the following
-design details.
+guest support for metadata scripts is implemented in the metadata script runner
+binary written in Go, with the following design details.
 
 *   Metadata scripts are executed in a shell.
 *   If multiple metadata keys are specified (e.g. `startup-script` and
@@ -209,10 +209,10 @@ are stored in the packaging/ directory.
 
 We build the following packages for the Windows guest environment:
 
-google-compute-engine-windows - contains the guest agent executable.
-google-compute-engine-metadata-scripts - contains files to run startup and shutdown scripts.
+* google-compute-engine-windows - contains the guest agent executable.
+* google-compute-engine-metadata-scripts - contains files to run startup and shutdown scripts.
 
 We build the following packages for the Linux guest environment:
 
-google-guest-agent - contains the guest agent and metadata script runner
+* google-guest-agent - contains the guest agent and metadata script runner
 executables, as well as service files for both.
