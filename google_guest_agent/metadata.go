@@ -285,3 +285,47 @@ func getMetadata(ctx context.Context, hang bool) (*metadata, error) {
 	var ret metadata
 	return &ret, json.Unmarshal(md, &ret)
 }
+
+func getOSLoginMetadata(ctx context.Context, url string) ([]byte, error) {
+	client := &http.Client{
+		Timeout: defaultTimeout,
+	}
+
+	finalURL := metadataURL + url
+	req, err := http.NewRequest("GET", finalURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Metadata-Flavor", "Google")
+	req = req.WithContext(ctx)
+
+	resp, err := client.Do(req)
+	// Don't return error on a canceled context.
+	if err != nil && ctx.Err() != nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	return res, err
+}
+
+type osLoginUser struct {
+	LoginProfiles []loginProfile
+}
+
+type loginProfile struct {
+	Name          string
+	PosixAccounts []posixAccount
+}
+
+type posixAccount struct {
+	Primary             bool
+	Username            string
+	Uid, Gid            string // No need to convert, we will write out as string anyway.
+	HomeDirectory       string
+	OperatingSystemType string
+}

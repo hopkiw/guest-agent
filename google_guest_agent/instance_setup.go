@@ -113,6 +113,11 @@ func agentInit(ctx context.Context) {
 			startSnapshotListener(snapshotServiceIP, snapshotServicePort)
 		}
 
+		if config.Section("Daemons").Key("oslogin_daemon").MustBool(true) {
+			logger.Infof("OS Login proxy enabled")
+			startOSLoginProxy()
+		}
+
 		// These scripts are run regardless of metadata/network access and config options.
 		for _, script := range []string{"optimize_local_ssd", "set_multiqueue"} {
 			if config.Section("InstanceSetup").Key(script).MustBool(true) {

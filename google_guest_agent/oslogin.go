@@ -1,4 +1,4 @@
-//  Copyright 2019 Google Inc. All Rights Reserved.
+//  Copyright 2020 Google Inc. All Rights Reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -15,8 +15,12 @@
 package main
 
 import (
+	"bufio"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
@@ -29,6 +33,7 @@ var (
 	googleComment    = "# Added by Google Compute Engine OS Login."
 	googleBlockStart = "#### Google OS Login control. Do not edit this section. ####"
 	googleBlockEnd   = "#### End Google OS Login control section. ####"
+	osLoginSockAddr  = "/var/run/oslogin"
 )
 
 type osloginMgr struct{}
@@ -368,3 +373,120 @@ func restartService(servicename string) error {
 
 	return nil
 }
+
+func startOSLoginProxy() {
+	if err := os.RemoveAll(osLoginSockAddr); err != nil {
+		logger.Errorf("error removing existing socket: %v", err)
+		return
+	}
+
+	l, err := net.Listen("unix", osLoginSockAddr)
+	if err != nil {
+		logger.Errorf("listen error: %v", err)
+		return
+	}
+	defer l.Close()
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			logger.Errorf("accept error: %v", err)
+			continue
+		}
+		go osLoginProxy(conn)
+	}
+
+	return
+}
+
+func osLoginProxy(c net.Conn) {
+	defer c.Close()
+	errHandler := func(res string, err error) []byte {
+		if err != nil {
+			return []byte("ERROR\n")
+		}
+		return []byte(res)
+	}
+	b := bufio.NewReader(c)
+	res, err := b.ReadBytes('\n')
+	if err != nil {
+		return
+	}
+	splitres := strings.SplitN(string(res), " ", 2)
+	var verb, arg string
+	verb = splitres[0]
+	if len(splitres) > 1 {
+		arg = splitres[1]
+	}
+	var towrite string
+	switch verb {
+	case "GETPWNAM":
+		towrite, err = osLoginGetPwNam(arg)
+		c.Write(errHandler(towrite, err))
+	case "GETPWUID":
+		towrite, err = osLoginGetPwUID(arg)
+		c.Write(errHandler(towrite, err))
+	case "GETGRNAM":
+		towrite, err = osLoginGetGrNam(arg)
+		c.Write(errHandler(towrite, err))
+	case "GETGRGID":
+		towrite, err = osLoginGetGrGid(arg)
+		c.Write(errHandler(towrite, err))
+	case "GETPWENT":
+		towrite, err = osLoginGetPwEnt()
+		c.Write(errHandler(towrite, err))
+	case "ENDPWENT":
+		towrite, err = osLoginEndPwEnt()
+		c.Write(errHandler(towrite, err))
+	case "GETGRENT":
+		towrite, err = osLoginGetGrEnt()
+		c.Write(errHandler(towrite, err))
+	case "ENDGRENT":
+		towrite, err = osLoginEndGrEnt()
+		c.Write(errHandler(towrite, err))
+	default:
+		c.Write([]byte("ERROR\n"))
+	}
+}
+
+func osLoginGetPwNam(name string) (string, error) {
+	resp, err := getOSLoginMetadata(context.Background(), "users?username="+name)
+	if err != nil {
+		return "", err
+	}
+
+	var user osLoginUser
+	err = json.Unmarshal(resp, &user)
+	if err != nil {
+		return "", err
+	}
+	posix := user.LoginProfiles[0].PosixAccounts[0]
+	return strings.Join([]string{posix.Username, "x", posix.Uid, posix.Gid, "", posix.HomeDirectory, "/bin/bash"}, ":"), nil
+}
+
+func osLoginGetPwUID(uid string) (string, error) {
+	return "", nil
+}
+func osLoginGetGrNam(name string) (string, error) {
+	return "", nil
+}
+func osLoginGetGrGid(gid string) (string, error) {
+	return "", nil
+}
+func osLoginGetPwEnt() (string, error) {
+	return "", nil
+}
+func osLoginEndPwEnt() (string, error) {
+	return "", nil
+}
+func osLoginGetGrEnt() (string, error) {
+	return "", nil
+}
+func osLoginEndGrEnt() (string, error) {
+	return "", nil
+}
+
+// each time we look up an entry, we should cache the result - a 404 or a result
+// each type of lookup should have a custom expiration set at lookup time. we
+//   should keep a certain amount of actual results in memory, and possible also
+//   write to a file for startup improvements
