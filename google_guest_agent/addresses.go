@@ -437,6 +437,18 @@ func configureIPv6() error {
 	if err != nil {
 		return err
 	}
+	if newNi.IPv6 != "" {
+		// TODO: does the "add /32" logic bother us here? does "scope host" hurt us?
+		if err := addLocalRoute(newNi.IPv6, iface.Name); err != nil {
+			// TODO: should we log or return?
+			return err
+		}
+	}
+	for _, ipv6 := range newNi.ForwardedIPv6s {
+		if err := addLocalRoute(ipv6, iface.Name); err != nil {
+			return err
+		}
+	}
 	switch {
 	case oldNi.DHCPv6Refresh != "" && newNi.DHCPv6Refresh == "",
 		newNi.DHCPv6Refresh == "" && len(oldMetadata.Instance.NetworkInterfaces) == 0:
