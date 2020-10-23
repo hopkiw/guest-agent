@@ -424,6 +424,9 @@ func (a *addressMgr) set() error {
 }
 
 // Enables or disables IPv6 on the primary interface.
+// for each of newMetadata.NetworkInterfaces.IPv6  and newMetadata.NetworkInterfaces.ForwardedIPv6s[], add route
+// ipv4 routes are handled ??
+// if the DHCPv6Refresh key is newly present AND IPv6 is NOT present, call dhclient (directpath case)
 func configureIPv6() error {
 	var newNi, oldNi networkInterfaces
 	if len(newMetadata.Instance.NetworkInterfaces) == 0 {
@@ -436,6 +439,17 @@ func configureIPv6() error {
 	iface, err := getInterfaceByMAC(newNi.Mac)
 	if err != nil {
 		return err
+	}
+	if newNi.IPv6 != "" {
+		// TODO: does "scope host" hurt us here?
+		if err := addLocalRoute(newNi.IPv6, iface.Name); err != nil {
+			logger.Warningf("failed to add route for assigned IPv6 space: %v\n", err)
+		}
+	}
+	for _, ipv6 := range newNi.ForwardedIPv6s {
+		if err := addLocalRoute(ipv6, iface.Name); err != nil {
+			logger.Warningf("failed to add route for forwarded IPv6 address %v: %v\n", ipv6, err)
+		}
 	}
 	switch {
 	case oldNi.DHCPv6Refresh != "" && newNi.DHCPv6Refresh == "",
@@ -467,10 +481,12 @@ func configureIPv6() error {
 			}
 			time.Sleep(1 * time.Second)
 		}
+		// Enable the kernel to accept routes from router advertisements.
 		val := fmt.Sprintf("net.ipv6.conf.%s.accept_ra_rt_info_max_plen=128", iface.Name)
 		if err := runCmd(exec.Command("sysctl", val)); err != nil {
 			return err
 		}
+		// Make a DHCPv6 request for the interface.
 		if err := runCmd(exec.Command("dhclient", "-1", "-6", "-v", iface.Name)); err != nil {
 			return err
 		}

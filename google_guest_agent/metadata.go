@@ -106,6 +106,8 @@ type networkInterfaces struct {
 	IPAliases         []string
 	Mac               string
 	DHCPv6Refresh     string
+	IPv6              string
+	ForwardedIPv6s    []string
 }
 
 type project struct {
